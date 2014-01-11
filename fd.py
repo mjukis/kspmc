@@ -84,7 +84,7 @@ def checkTelemetry():
 def getTelemetry(od):
     maxralt = 700000 #max radar altitude
     minralt = 500 #min radar altitude
-    url = "http://108.196.82.116:8023/telemachus/datalink?throt=f.throttle&rcs=v.rcsValue&sas=v.sasValue&light=v.lightValue&pe=o.PeA&ap=o.ApA&ttap=o.timeTo$
+    url = "http://108.196.82.116:8023/telemachus/datalink?throt=f.throttle&rcs=v.rcsValue&sas=v.sasValue&light=v.lightValue&pe=o.PeA&ap=o.ApA&ttap=o.timeToAp&ttpe=o.timeToPe&operiod=o.period&sma=o.sma&alt=v.altitude&hat=v.heightFromTerrain&mt=v.missionTime&sfcv=v.surfaceVelocity&ov=v.orbitalVelocity&vs=v.verticalSpeed&lat=v.lat&long=v.long&body=v.body&o2=r.resource[Oxygen]&co2=r.resource[CarbonDioxide]&h2o=r.resource[Water]&w=r.resource[ElectricCharge]&food=r.resource[Food]&waste=r.resource[Waste]&wastewater=r.resource[WasteWater]&mo2=r.resourceMax[Oxygen]&mco2=r.resourceMax[CarbonDioxide]&mh2o=r.resourceMax[Water]&mw=r.resourceMax[ElectricCharge]&mfood=r.resourceMax[Food]&mwaste=r.resourceMax[Waste]&mwastewater=r.resourceMax[WasteWater]&pitch=n.pitch&roll=n.roll&hdg=n.heading"
     try:
         u = urllib2.urlopen(url)
         d = json.load(u)
