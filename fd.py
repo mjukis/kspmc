@@ -132,13 +132,27 @@ def fetchData():
         d["tstatus"] = 0
     return d
 
+#def checkRadar(d):
+#    maxralt = 7000000 #max radar altitude
+#    minralt = 500 #min radar altitude
+#    if d["body"] != "Kerbin":
+#        return 1
+#    if d["alt"] > maxralt:
+#        return 2
+#    if d["alt"] < minralt:
+#        return 3
+#    return 0
+
 def getRadar(d):
     maxralt = 7000000 #max radar altitude
     minralt = 500 #min radar altitude
     d["ralt"] = rAlt(rSlop(d["alt"]))
     d["rpe"] = rAlt(rSlop(d["pe"]))
     d["rap"] = rAlt(rSlop(d["ap"]))
-    d["smag"] = rAlt(rSlop(d["sma"] - 600000))
+    if isNum(d["sma"]):
+        d["smag"] = rAlt(rSlop(d["sma"] - 600000))
+    else:
+        d["smag"] = "ERR!"
     d["rlat"] = d["lat"]
     d["rlong"] = d["long"]
     d["rinc"] = d["inc"]
@@ -210,9 +224,9 @@ def getTelemetry(d):
         d["altt"] = "?"
         d["lat"] = " "
         d["long"] = " "
-        d["pitch"] = " "
-        d["roll"] = " "
-        d["hdg"] = " "
+        d["pitch"] = "0"
+        d["roll"] = "0"
+        d["hdg"] = "0"
         d["ttap"] = " "
         d["ttpe"] = " "
         d["sma"] = "ERR!"
@@ -259,6 +273,20 @@ def ptime(num):
         m = str(int(m)).zfill(2)
         s = str(int(s)).zfill(2)
         nnum = "%s:%s:%s" % (h,m,s)
+    else:
+        nnum = num
+    return nnum
+
+def pltime(num):
+    if isNum(num):
+        m, s = divmod(num, 60)
+        h, m = divmod(m, 60)
+        d, h = divmod(h, 24)
+        d = xstr(int(d)).zfill(2)
+        h = xstr(int(h)).zfill(2)
+        m = xstr(int(m)).zfill(2)
+        s = xstr(int(s)).zfill(2)
+        nnum = "%sd %s:%s:%s" % (d,h,m,s)
     else:
         nnum = num
     return nnum
@@ -311,6 +339,50 @@ def plong(inum):
     else:
         nnum = inum
     return nnum
+
+def init_time_window(win,y,x):
+    timewin = curses.newwin(2,14,y,x)
+    timewin.box()
+    timewin.bkgd(curses.color_pair(1));
+    win.refresh()
+    timewin.addstr(0,1,"MISSION TIME",curses.A_BOLD)
+    timewin.refresh()
+    return timewin
+
+def draw_time_window(win,data):
+    win.addstr(1,1,"           ",curses.A_BOLD)
+    win.addstr(1,1,pltime(data["mt"]),curses.A_BOLD)
+    win.refresh()
+
+def init_sys_window(win,y,x):
+    syswin = curses.newwin(2,21,y,x)
+    syswin.box()
+    syswin.bkgd(curses.color_pair(1));
+    win.refresh()
+    syswin.addstr(0,1,"SYSYEMS",curses.A_BOLD)
+    syswin.refresh()
+    return syswin
+
+def draw_sys_window(win,data):
+    win.addstr(1,1,"RCS|SAS|LGT|TEL|RAD")
+    if data["rcs"] == "True":
+        win.addstr(1,1,"RCS",curses.A_REVERSE)
+    if data["sas"] == "True":
+        win.addstr(1,5,"SAS",curses.A_REVERSE)
+    if data["light"] == "True":
+        win.addstr(1,9,"LGT",curses.A_REVERSE)
+    if isNum(data["alt"]):
+        win.addstr(1,13,"TEL",curses.A_REVERSE)
+    if isNum(data["ralt"]):
+        win.addstr(1,17,"RAD",curses.A_REVERSE)
+    else:
+        if data["ralt"] == "MAX":
+            win.addstr(1,17,"RMX")
+        if data["ralt"] == "MIN":
+            win.addstr(1,17,"RMN")
+        if data["ralt"] == "N/A":
+            win.addstr(1,17,"RNA")
+    win.refresh()
 
 def init_tpos_window(win,y,x):
     twin = curses.newwin(11,18,y,x)
@@ -442,16 +514,22 @@ def draw_orbit_window(win,data):
     win.refresh()
 
 def mainloop(win):
+    timeposx = 0
+    timeposy = 1
     tposx = 0
-    tposy = 4
+    tposy = 3
     rposx = 18
-    roposy = 4
+    roposy = 3
     roposx = 54
-    rposy = 4
+    rposy = 3
     oposx = 36
-    oposy = 4
+    oposy = 3
+    sysx = 14
+    sysy = 1
     win.nodelay(1)
     init_window(win)
+    timewin = init_time_window(win,timeposy,timeposx)
+    syswin = init_sys_window(win,sysy,sysx)
     twin = init_tpos_window(win,tposy,tposx)
     rwin = init_rpos_window(win,rposy,rposx)
     rowin = init_rorb_window(win,roposy,roposx)
@@ -461,6 +539,8 @@ def mainloop(win):
         radar = getRadar(data)
         tele = getTelemetry(data)
         write_datetime(win)
+        draw_time_window(timewin,tele)
+        draw_sys_window(syswin,tele)
         draw_tpos_window(twin,tele)
         draw_rpos_window(rwin,radar)
         draw_rorb_window(rowin,radar)
