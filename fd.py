@@ -74,41 +74,33 @@ def rAlt(num):
     else:
         return num
 
-def checkTelemetry():
-    check = random.uniform(1,100)
-    if check > 95:
-        return False
-    else:
+def checkTelemetry(pstat):
+    if pstat == 0:
         return True
+    else:
+        return False
 
-def getTelemetry(od):
-    maxralt = 700000 #max radar altitude
-    minralt = 500 #min radar altitude
-    url = "http://108.196.82.116:8023/telemachus/datalink?throt=f.throttle&rcs=v.rcsValue&sas=v.sasValue&light=v.lightValue&pe=o.PeA&ap=o.ApA&ttap=o.timeToAp&ttpe=o.timeToPe&operiod=o.period&sma=o.sma&alt=v.altitude&hat=v.heightFromTerrain&mt=v.missionTime&sfcv=v.surfaceVelocity&ov=v.orbitalVelocity&vs=v.verticalSpeed&lat=v.lat&long=v.long&body=v.body&o2=r.resource[Oxygen]&co2=r.resource[CarbonDioxide]&h2o=r.resource[Water]&w=r.resource[ElectricCharge]&food=r.resource[Food]&waste=r.resource[Waste]&wastewater=r.resource[WasteWater]&mo2=r.resourceMax[Oxygen]&mco2=r.resourceMax[CarbonDioxide]&mh2o=r.resourceMax[Water]&mw=r.resourceMax[ElectricCharge]&mfood=r.resourceMax[Food]&mwaste=r.resourceMax[Waste]&mwastewater=r.resourceMax[WasteWater]&pitch=n.pitch&roll=n.roll&hdg=n.heading"
+def fetchData():
+    d = {'alt':'ERR!','altt':'?'}
+    url = "http://108.196.82.116:8023/telemachus/datalink?throt=f.throttle&rcs=v.rcsValue&sas=v.sasValue&light=v.lightValue&pe=o.PeA&ap=o.ApA&ttap=o.timeToAp&ttpe=o.timeToPe&operiod=o.period&sma=o.sma&alt=v.altitude&hat=v.heightFromTerrain&mt=v.missionTime&sfcv=v.surfaceVelocity&ov=v.orbitalVelocity&vs=v.verticalSpeed&lat=v.lat&long=v.long&body=v.body&o2=r.resource[Oxygen]&co2=r.resource[CarbonDioxide]&h2o=r.resource[Water]&w=r.resource[ElectricCharge]&food=r.resource[Food]&waste=r.resource[Waste]&wastewater=r.resource[WasteWater]&mo2=r.resourceMax[Oxygen]&mco2=r.resourceMax[CarbonDioxide]&mh2o=r.resourceMax[Water]&mw=r.resourceMax[ElectricCharge]&mfood=r.resourceMax[Food]&mwaste=r.resourceMax[Waste]&mwastewater=r.resourceMax[WasteWater]&pitch=n.pitch&roll=n.roll&hdg=n.heading&pstat=p.paused&inc=o.inclination&ecc=o.eccentricity&aoe=o.argumentOfPeriapsis&lan=o.lan"
     try:
         u = urllib2.urlopen(url)
         d = json.load(u)
+        d["tstatus"] = 1
     except:
-        od["body"] = "ERR"
-        od["altt"] = "?"
-        return od
-    d["asma"] = d["sma"] - 600000
+        d["tstatus"] = 0
+    return d
+
+def getRadar(d):
+    maxralt = 7000000 #max radar altitude
+    minralt = 500 #min radar altitude
     d["ralt"] = rAlt(rSlop(d["alt"]))
     d["rpe"] = rAlt(rSlop(d["pe"]))
     d["rap"] = rAlt(rSlop(d["ap"]))
     d["rlat"] = d["lat"]
     d["rlong"] = d["long"]
-    d["lat"] = rSlop(d["lat"])
-    d["long"] = rSlop(d["long"])
-    d["altt"] = "?"
     d["rstatus"] = "NOMINAL"
-    if isNum(d["vs"]):
-        if d["vs"] < 0:
-            d["altt"] = "-"
-        else:
-            d["altt"] = "+"
-        if int(d["vs"]) == 0:
-            d["altt"] = " "
+#    d["rstatus"] = d["tstatus"]
     if d["body"] != "Kerbin":
         d["ralt"] = "N/A"
         d["rpe"] = "N/A"
@@ -129,7 +121,7 @@ def getTelemetry(od):
         d["rap"] = " "
         d["rlat"] = " "
         d["rlong"] = " "
-        d["rstatus"] = "UNAVAIL"
+        d["rstatus"] = "UNAVAIL"    
     if isNum(d["ralt"]):
         if d["ralt"] > 100000:
             if d["ralt"] > 1000000:
@@ -137,7 +129,22 @@ def getTelemetry(od):
             d["ralt"] = round(d["ralt"], -3)
         else:
             d["ralt"] = round(d["ralt"], -2)
+    return d
+
+def getTelemetry(d):
+    d["asma"] = d["sma"] - 600000
+    d["lat"] = rSlop(d["lat"])
+    d["long"] = rSlop(d["long"])
+    d["altt"] = "?"
+    if isNum(d["vs"]):
+        if d["vs"] < 0:
+            d["altt"] = "-"
+        else:
+            d["altt"] = "+"
+        if int(d["vs"]) == 0:
+            d["altt"] = " "
 #list
+#       pause status    pstat
 #       throttle        throt
 #       rcs value       rcs
 #       sas value       sas
@@ -168,18 +175,44 @@ def getTelemetry(od):
 #       pitch deg       pitch
 #       roll deg        roll
 #       hdg deg         hdg
+#	inclination	inc
+#	eccentricity	ecc
+#	long of AN	lan
+#	arg of PE	aop
 #
-#
-    if checkTelemetry():
+    if checkTelemetry(d["pstat"]):
         return d
     else:
-        od["body"] = "ERR!"
-        od["altt"] = "?"
-        return od
+        d["alt"] = "ERR!"
+        d["altt"] = "?"
+        d["lat"] = " "
+        d["long"] = " "
+        d["pitch"] = " "
+        d["roll"] = " "
+        d["hdg"] = " "
+        d["ttap"] = " "
+        d["ttpe"] = " "
+        d["sma"] = "ERR!"
+        d["ap"] = " "
+        d["pe"] = " "
+        d["inc"] = " "
+        d["ecc"] = " "
+        d["lan"] = " "
+        d["aop"] = " "
+        d["ov"] = " "
+        d["operiod"] = " "
+        return d
 
 def pnum(num):
     if isNum(num):
         nnum = xstr("{:,}".format(int(num)))
+    else:
+        nnum = num
+    return nnum
+
+def pvel(num):
+    if isNum(num):
+        nnum = xstr("{:,}".format(int(num))) + "m/s"
     else:
         nnum = num
     return nnum
@@ -261,14 +294,14 @@ def init_tpos_window(win,y,x):
     twin.box()
     twin.bkgd(curses.color_pair(1));
     win.refresh()
-    twin.addstr(0,1,"TPOS",curses.A_BOLD)
+    twin.addstr(0,1,"T.POS",curses.A_BOLD)
     twin.addstr(1,1,"  BODY ")
-    twin.addstr(2,1,"  TALT ")
-    twin.addstr(3,1,"  TLAT ")
-    twin.addstr(4,1," TLONG ")
-    twin.addstr(5,1,"  TPIT ")
-    twin.addstr(6,1,"  TROL ")
-    twin.addstr(7,1,"  THDG ")
+    twin.addstr(2,1," T.ALT ")
+    twin.addstr(3,1," T.LAT ")
+    twin.addstr(4,1,"T.LONG ")
+    twin.addstr(5,1," T.PIT ")
+    twin.addstr(6,1," T.ROL ")
+    twin.addstr(7,1," T.HDG ")
     twin.addstr(8,1," TT AP ")
     twin.addstr(9,1," TT PE ")
     twin.refresh()
@@ -300,11 +333,11 @@ def init_rpos_window(win,y,x):
     rwin.box()
     rwin.bkgd(curses.color_pair(1));
     win.refresh()
-    rwin.addstr(0,1,"RPOS",curses.A_BOLD)
+    rwin.addstr(0,1,"R.POS",curses.A_BOLD)
     rwin.addstr(1,1,"STATUS ")
-    rwin.addstr(2,1,"  RALT ")
-    rwin.addstr(3,1,"  RLAT ")
-    rwin.addstr(4,1," RLONG ")
+    rwin.addstr(2,1," R.ALT ")
+    rwin.addstr(3,1," R.LAT ")
+    rwin.addstr(4,1,"R.LONG ")
     rwin.refresh()
     return rwin
 
@@ -319,22 +352,87 @@ def draw_rpos_window(win,data):
     win.addstr(4,8,plong(data["rlong"]),curses.A_BOLD)
     win.refresh()
 
+def init_rorb_window(win,y,x):
+    rowin = curses.newwin(9,18,y,x)
+    rowin.box()
+    rowin.bkgd(curses.color_pair(1));
+    win.refresh()
+    rowin.addstr(0,1,"R.ORBIT",curses.A_BOLD)
+    rowin.addstr(1,1,"  R.AP ")
+    rowin.addstr(2,1,"  R.PE ")
+    rowin.addstr(3,1," R.LAT ")
+    rowin.addstr(4,1,"R.LONG ")
+    rowin.refresh()
+    return rowin
+
+def draw_rorb_window(win,data):
+    win.addstr(1,8,"         ",curses.A_BOLD)
+    win.addstr(2,8,"         ",curses.A_BOLD)
+    win.addstr(3,8,"         ",curses.A_BOLD)
+    win.addstr(4,8,"         ",curses.A_BOLD)
+    win.addstr(1,8,palt(data["rap"]),curses.A_BOLD)
+    win.addstr(2,8,palt(data["rpe"]),curses.A_BOLD)
+    win.addstr(3,8,plat(data["rlat"]),curses.A_BOLD)
+    win.addstr(4,8,plong(data["rlong"]),curses.A_BOLD)
+    win.refresh()
+
+def init_orbit_window(win,y,x):
+    owin = curses.newwin(9,18,y,x)
+    owin.box()
+    owin.bkgd(curses.color_pair(1));
+    win.refresh()
+    owin.addstr(0,1,"T.ORBIT",curses.A_BOLD)
+    owin.addstr(1,1," T.SMA ")
+    owin.addstr(2,1,"  T.AP ")
+    owin.addstr(3,1,"  T.PE ")
+    owin.addstr(4,1,"T.OPRD ")
+    owin.addstr(5,1," T.INC ")
+    owin.addstr(6,1," T.LAN ")
+    owin.addstr(7,1,"T.OVEL ")
+    owin.refresh()
+    return owin
+
+def draw_orbit_window(win,data):
+    win.addstr(1,8,"         ",curses.A_BOLD)
+    win.addstr(2,8,"         ",curses.A_BOLD)
+    win.addstr(3,8,"         ",curses.A_BOLD)
+    win.addstr(4,8,"         ",curses.A_BOLD)
+    win.addstr(5,8,"         ",curses.A_BOLD)
+    win.addstr(6,8,"         ",curses.A_BOLD)
+    win.addstr(7,8,"         ",curses.A_BOLD)
+    win.addstr(1,8,palt(data["sma"]).upper(),curses.A_BOLD)
+    win.addstr(2,8,palt(data["ap"]),curses.A_BOLD)
+    win.addstr(3,8,palt(data["pe"]),curses.A_BOLD)
+    win.addstr(4,8,ptime(data["operiod"]),curses.A_BOLD)
+    win.addstr(5,8,pdeg(data["inc"]),curses.A_BOLD)
+    win.addstr(6,8,plong(data["lan"]),curses.A_BOLD)
+    win.addstr(7,8,pvel(data["ov"]),curses.A_BOLD)
+    win.refresh()
+
 def mainloop(win):
     tposx = 0
     tposy = 4
     rposx = 18
+    roposy = 10
+    roposx = 18
     rposy = 4
+    oposx = 36
+    oposy = 4
     win.nodelay(1)
     init_window(win)
     twin = init_tpos_window(win,tposy,tposx)
     rwin = init_rpos_window(win,rposy,rposx)
-    odata = getTelemetry("ERROR")
+    rowin = init_rorb_window(win,roposy,roposx)
+    owin = init_orbit_window(win,oposy,oposx)
     while 1 is 1:
-        data = getTelemetry(odata)
-        odata = data
+        data = fetchData()
+        radar = getRadar(data)
+        tele = getTelemetry(data)
         write_datetime(win)
-        draw_tpos_window(twin,data)
-        draw_rpos_window(rwin,data)
+        draw_tpos_window(twin,tele)
+        draw_rpos_window(rwin,radar)
+        draw_rorb_window(rowin,radar)
+        draw_orbit_window(owin,tele)
         time.sleep(1)
 
 def startup():
