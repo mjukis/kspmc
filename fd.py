@@ -88,6 +88,47 @@ def fetchData():
         d = json.load(u)
         d["tstatus"] = 1
     except:
+        d["throt"] = " "	#Throttle
+        d["rcs"] = " "		#RCS status
+        d["sas"] = " "		#SAS status
+        d["light"] = " "	#Lights status
+        d["pe"] = " "		#PE
+        d["ap"] = " "		#AP
+        d["ttap"] = " "		#Time to AP
+        d["ttpe"] = " "		#Time to PE
+        d["operiod"] = " "	#Orbital period
+        d["sma"] = " "		#SMA
+        d["alt"] = " "		#Altitude
+        d["hat"] = " "		#Height above terrain
+        d["mt"] = " "		#Mission time
+        d["sfcv"] = " "		#SFC velocity
+        d["ov"] = " "		#Orbital velocity
+        d["vs"] = " "		#Vertical speed
+        d["lat"] = " "		#Latitude
+        d["long"] = " "		#Longitude
+        d["body"] = " "		#Orbital body
+        d["o2"] = " "		#Oxygen
+        d["co2"] = " "		#Carbon dioxide
+        d["h2o"] = " "		#Water
+        d["w"] = " "		#Electric charge
+        d["food"] = " "		#Food
+        d["waste"] = " "	#Solid waste
+        d["wastewater"] = " "	#Liquid waste
+        d["mo2"] = " "		#Max oxygen
+        d["mco2"] = " "		#Max carbon dioxide
+        d["mh2o"] = " "		#Max water
+        d["mw"] = " "		#Max electric charge
+        d["mfood"] = " "	#Max food
+        d["mwaste"] = " "	#Max solid waste
+        d["mwastewater"] = " "	#Max liquid waste
+        d["pitch"] = " "	#Pitch degrees
+        d["roll"] = " "		#Roll degrees
+        d["hdg"] = " "		#Heading degrees
+        d["pstat"] = "1"	#Telemetry status
+        d["inc"] = " "		#Inclination
+        d["ecc"] = " "		#Eccentricity
+        d["aope"] = " "		#Argument of PE
+        d["lan"] = " "		#Longitude of AN
         d["tstatus"] = 0
     return d
 
@@ -97,16 +138,26 @@ def getRadar(d):
     d["ralt"] = rAlt(rSlop(d["alt"]))
     d["rpe"] = rAlt(rSlop(d["pe"]))
     d["rap"] = rAlt(rSlop(d["ap"]))
+    d["smag"] = rAlt(rSlop(d["sma"] - 600000))
     d["rlat"] = d["lat"]
     d["rlong"] = d["long"]
+    d["rinc"] = d["inc"]
+    d["rlan"] = d["lan"]
+    d["roperiod"] = d["operiod"]
+    d["rov"] = d["ov"]
     d["rstatus"] = "NOMINAL"
 #    d["rstatus"] = d["tstatus"]
     if d["body"] != "Kerbin":
         d["ralt"] = "N/A"
-        d["rpe"] = "N/A"
-        d["rap"] = "N/A"
-        d["rlat"] = "N/A"
-        d["rlong"] = "N/A"
+        d["rpe"] = " "
+        d["rap"] = " "
+        d["rlat"] = " "
+        d["rlong"] = " "
+        d["smag"] = "N/A"
+        d["rinc"] = " "
+        d["rlan"] = " "
+        d["roperiod"] = " "
+        d["rov"] = " "
         d["rstatus"] = "UNAVAIL"
     if d["alt"] > maxralt:
         d["ralt"] = "MAX"
@@ -114,6 +165,11 @@ def getRadar(d):
         d["rap"] = " "
         d["rlat"] = " "
         d["rlong"] = " "
+        d["smag"] = "MAX"
+        d["rinc"] = " "
+        d["rlan"] = " "
+        d["roperiod"] = " "
+        d["rov"] = " "
         d["rstatus"] = "UNAVAIL"
     if d["alt"] < minralt:
         d["ralt"] = "MIN"
@@ -121,6 +177,11 @@ def getRadar(d):
         d["rap"] = " "
         d["rlat"] = " "
         d["rlong"] = " "
+        d["smag"] = "MIN"
+        d["rinc"] = " "
+        d["rlan"] = " "
+        d["roperiod"] = " "
+        d["rov"] = " "
         d["rstatus"] = "UNAVAIL"    
     if isNum(d["ralt"]):
         if d["ralt"] > 100000:
@@ -132,7 +193,6 @@ def getRadar(d):
     return d
 
 def getTelemetry(d):
-    d["asma"] = d["sma"] - 600000
     d["lat"] = rSlop(d["lat"])
     d["long"] = rSlop(d["long"])
     d["altt"] = "?"
@@ -143,43 +203,6 @@ def getTelemetry(d):
             d["altt"] = "+"
         if int(d["vs"]) == 0:
             d["altt"] = " "
-#list
-#       pause status    pstat
-#       throttle        throt
-#       rcs value       rcs
-#       sas value       sas
-#       lights value    light
-#       PE              pe
-#       AP              ap
-#       time to PE      ttpe
-#       time to AP      ttap
-#       orbital period  operiod
-#       SMA             sma
-#       altitude        alt
-#       HAT             hat
-#       mission time    mt
-#       sfc vel         sfcv
-#       obt vel         ov
-#       vertical speed  vs
-#       lat             lat
-#       long            long
-#       body            body
-#       oxygen          o2
-#       co2             co2
-#       water           h2o
-#       watts           w
-#       food            food
-#       waste           waste
-#       wastewater      wastewater
-#       "       max     m"
-#       pitch deg       pitch
-#       roll deg        roll
-#       hdg deg         hdg
-#	inclination	inc
-#	eccentricity	ecc
-#	long of AN	lan
-#	arg of PE	aop
-#
     if checkTelemetry(d["pstat"]):
         return d
     else:
@@ -358,10 +381,13 @@ def init_rorb_window(win,y,x):
     rowin.bkgd(curses.color_pair(1));
     win.refresh()
     rowin.addstr(0,1,"R.ORBIT",curses.A_BOLD)
-    rowin.addstr(1,1,"  R.AP ")
-    rowin.addstr(2,1,"  R.PE ")
-    rowin.addstr(3,1," R.LAT ")
-    rowin.addstr(4,1,"R.LONG ")
+    rowin.addstr(1,1,"R.SMAG ")
+    rowin.addstr(2,1,"  R.AP ")
+    rowin.addstr(3,1,"  R.PE ")
+    rowin.addstr(4,1," R.INC ")
+    rowin.addstr(5,1," R.LAN ")
+    rowin.addstr(6,1,"R.OPRD ")
+    rowin.addstr(7,1,"R.OVEL ")
     rowin.refresh()
     return rowin
 
@@ -370,10 +396,16 @@ def draw_rorb_window(win,data):
     win.addstr(2,8,"         ",curses.A_BOLD)
     win.addstr(3,8,"         ",curses.A_BOLD)
     win.addstr(4,8,"         ",curses.A_BOLD)
-    win.addstr(1,8,palt(data["rap"]),curses.A_BOLD)
-    win.addstr(2,8,palt(data["rpe"]),curses.A_BOLD)
-    win.addstr(3,8,plat(data["rlat"]),curses.A_BOLD)
-    win.addstr(4,8,plong(data["rlong"]),curses.A_BOLD)
+    win.addstr(5,8,"         ",curses.A_BOLD)
+    win.addstr(6,8,"         ",curses.A_BOLD)
+    win.addstr(7,8,"         ",curses.A_BOLD)
+    win.addstr(1,8,palt(data["smag"]),curses.A_BOLD)
+    win.addstr(2,8,palt(data["rap"]),curses.A_BOLD)
+    win.addstr(3,8,palt(data["rpe"]),curses.A_BOLD)
+    win.addstr(4,8,pdeg(data["rinc"]),curses.A_BOLD)
+    win.addstr(5,8,plong(data["rlan"]),curses.A_BOLD)
+    win.addstr(6,8,ptime(data["roperiod"]),curses.A_BOLD)
+    win.addstr(7,8,pvel(data["rov"]),curses.A_BOLD)
     win.refresh()
 
 def init_orbit_window(win,y,x):
@@ -385,9 +417,9 @@ def init_orbit_window(win,y,x):
     owin.addstr(1,1," T.SMA ")
     owin.addstr(2,1,"  T.AP ")
     owin.addstr(3,1,"  T.PE ")
-    owin.addstr(4,1,"T.OPRD ")
-    owin.addstr(5,1," T.INC ")
-    owin.addstr(6,1," T.LAN ")
+    owin.addstr(4,1," T.INC ")
+    owin.addstr(5,1," T.LAN ")
+    owin.addstr(6,1,"T.OPRD ")
     owin.addstr(7,1,"T.OVEL ")
     owin.refresh()
     return owin
@@ -400,12 +432,12 @@ def draw_orbit_window(win,data):
     win.addstr(5,8,"         ",curses.A_BOLD)
     win.addstr(6,8,"         ",curses.A_BOLD)
     win.addstr(7,8,"         ",curses.A_BOLD)
-    win.addstr(1,8,palt(data["sma"]).upper(),curses.A_BOLD)
+    win.addstr(1,8,palt(data["sma"]),curses.A_BOLD)
     win.addstr(2,8,palt(data["ap"]),curses.A_BOLD)
     win.addstr(3,8,palt(data["pe"]),curses.A_BOLD)
-    win.addstr(4,8,ptime(data["operiod"]),curses.A_BOLD)
-    win.addstr(5,8,pdeg(data["inc"]),curses.A_BOLD)
-    win.addstr(6,8,plong(data["lan"]),curses.A_BOLD)
+    win.addstr(4,8,pdeg(data["inc"]),curses.A_BOLD)
+    win.addstr(5,8,plong(data["lan"]),curses.A_BOLD)
+    win.addstr(6,8,ptime(data["operiod"]),curses.A_BOLD)
     win.addstr(7,8,pvel(data["ov"]),curses.A_BOLD)
     win.refresh()
 
@@ -413,8 +445,8 @@ def mainloop(win):
     tposx = 0
     tposy = 4
     rposx = 18
-    roposy = 10
-    roposx = 18
+    roposy = 4
+    roposx = 54
     rposy = 4
     oposx = 36
     oposy = 4
