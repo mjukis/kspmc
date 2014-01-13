@@ -19,6 +19,8 @@ import json
 import random
 
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+olddata = {"alt":"0","pe":"0"}
+global olddata
 
 def xstr(s):
     if s is None:
@@ -81,12 +83,14 @@ def checkTelemetry(pstat):
         return False
 
 def fetchData():
+    global olddata
     d = {'alt':'ERR!','altt':'?'}
     url = "http://108.196.82.116:8023/telemachus/datalink?throt=f.throttle&rcs=v.rcsValue&sas=v.sasValue&light=v.lightValue&pe=o.PeA&ap=o.ApA&ttap=o.timeToAp&ttpe=o.timeToPe&operiod=o.period&sma=o.sma&alt=v.altitude&hat=v.heightFromTerrain&mt=v.missionTime&sfcv=v.surfaceVelocity&ov=v.orbitalVelocity&vs=v.verticalSpeed&lat=v.lat&long=v.long&body=v.body&o2=r.resource[Oxygen]&co2=r.resource[CarbonDioxide]&h2o=r.resource[Water]&w=r.resource[ElectricCharge]&food=r.resource[Food]&waste=r.resource[Waste]&wastewater=r.resource[WasteWater]&mo2=r.resourceMax[Oxygen]&mco2=r.resourceMax[CarbonDioxide]&mh2o=r.resourceMax[Water]&mw=r.resourceMax[ElectricCharge]&mfood=r.resourceMax[Food]&mwaste=r.resourceMax[Waste]&mwastewater=r.resourceMax[WasteWater]&pitch=n.pitch&roll=n.roll&hdg=n.heading&pstat=p.paused&inc=o.inclination&ecc=o.eccentricity&aoe=o.argumentOfPeriapsis&lan=o.lan&ut=t.universalTime&lf=r.resource[LiquidFuel]&oxidizer=r.resource[Oxidizer]&mono=r.resource[MonoPropellant]&mlf=r.resourceMax[LiquidFuel]&moxidizer=r.resourceMax[Oxidizer]&mmono=r.resourceMax[MonoPropellant]"
     try:
         u = urllib2.urlopen(url)
         d = json.load(u)
         d["tstatus"] = 1
+        olddata = d
     except:
         d["throt"] = " "	#Throttle
         d["rcs"] = " "		#RCS status
@@ -135,21 +139,11 @@ def fetchData():
         d["mlf"] = " "		#Max liquid fuel
         d["moxidizer"] = " "	#Max oxidizer
         d["tstatus"] = 0
+        d = olddata
     return d
 
-#def checkRadar(d):
-#    maxralt = 7000000 #max radar altitude
-#    minralt = 500 #min radar altitude
-#    if d["body"] != "Kerbin":
-#        return 1
-#    if d["alt"] > maxralt:
-#        return 2
-#    if d["alt"] < minralt:
-#        return 3
-#    return 0
-
 def getRadar(d):
-    maxralt = 70000 #max radar altitude
+    maxralt = 7000000 #max radar altitude
     minralt = 500 #min radar altitude
     d["ralt"] = rAlt(rSlop(d["alt"]))
     d["rpe"] = rAlt(rSlop(d["pe"]))
@@ -297,7 +291,7 @@ def pvel(num):
 def phbar(num,mnum):
     if isNum(num) and isNum(mnum):
         pnum = int((num / mnum) * 100)
-        onum = xstr(" " + "{:,}".format(int(num))) + " (%s)" % pnum
+        onum = xstr(" " + "{:,}".format(int(num))) + " (" + xstr(pnum) + "%)"
     else:
         onum = num
     return onum
@@ -685,27 +679,27 @@ def draw_mono_window(win,data):
     win.refresh()
 
 def mainloop(win):
-    timeposx = 0
+    timeposx = 1
     timeposy = 1
-    utimeposx = 15
+    utimeposx = 16
     utimeposy = 1
-    tposx = 0
+    tposx = 1
     tposy = 3
-    rposx = 19
+    rposx = 20
     roposy = 3
-    roposx = 57
+    roposx = 58
     rposy = 3
-    oposx = 38
+    oposx = 39
     oposy = 3
-    sysx = 30
+    sysx = 31
     sysy = 1
-    sfcx = 57
+    sfcx =58
     sfcy = 12
-    fuelx = 0
+    fuelx = 1
     fuely = 14
-    oxix = 0
+    oxix = 1
     oxiy = 17
-    monox = 0
+    monox = 1
     monoy = 20
     win.nodelay(1)
     init_window(win)
