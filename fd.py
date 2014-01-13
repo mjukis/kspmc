@@ -82,7 +82,7 @@ def checkTelemetry(pstat):
 
 def fetchData():
     d = {'alt':'ERR!','altt':'?'}
-    url = "http://108.196.82.116:8023/telemachus/datalink?throt=f.throttle&rcs=v.rcsValue&sas=v.sasValue&light=v.lightValue&pe=o.PeA&ap=o.ApA&ttap=o.timeToAp&ttpe=o.timeToPe&operiod=o.period&sma=o.sma&alt=v.altitude&hat=v.heightFromTerrain&mt=v.missionTime&sfcv=v.surfaceVelocity&ov=v.orbitalVelocity&vs=v.verticalSpeed&lat=v.lat&long=v.long&body=v.body&o2=r.resource[Oxygen]&co2=r.resource[CarbonDioxide]&h2o=r.resource[Water]&w=r.resource[ElectricCharge]&food=r.resource[Food]&waste=r.resource[Waste]&wastewater=r.resource[WasteWater]&mo2=r.resourceMax[Oxygen]&mco2=r.resourceMax[CarbonDioxide]&mh2o=r.resourceMax[Water]&mw=r.resourceMax[ElectricCharge]&mfood=r.resourceMax[Food]&mwaste=r.resourceMax[Waste]&mwastewater=r.resourceMax[WasteWater]&pitch=n.pitch&roll=n.roll&hdg=n.heading&pstat=p.paused&inc=o.inclination&ecc=o.eccentricity&aoe=o.argumentOfPeriapsis&lan=o.lan"
+    url = "http://108.196.82.116:8023/telemachus/datalink?throt=f.throttle&rcs=v.rcsValue&sas=v.sasValue&light=v.lightValue&pe=o.PeA&ap=o.ApA&ttap=o.timeToAp&ttpe=o.timeToPe&operiod=o.period&sma=o.sma&alt=v.altitude&hat=v.heightFromTerrain&mt=v.missionTime&sfcv=v.surfaceVelocity&ov=v.orbitalVelocity&vs=v.verticalSpeed&lat=v.lat&long=v.long&body=v.body&o2=r.resource[Oxygen]&co2=r.resource[CarbonDioxide]&h2o=r.resource[Water]&w=r.resource[ElectricCharge]&food=r.resource[Food]&waste=r.resource[Waste]&wastewater=r.resource[WasteWater]&mo2=r.resourceMax[Oxygen]&mco2=r.resourceMax[CarbonDioxide]&mh2o=r.resourceMax[Water]&mw=r.resourceMax[ElectricCharge]&mfood=r.resourceMax[Food]&mwaste=r.resourceMax[Waste]&mwastewater=r.resourceMax[WasteWater]&pitch=n.pitch&roll=n.roll&hdg=n.heading&pstat=p.paused&inc=o.inclination&ecc=o.eccentricity&aoe=o.argumentOfPeriapsis&lan=o.lan&ut=t.universalTime&lf=r.resource[LiquidFuel]&oxidizer=r.resource[Oxidizer]&mono=r.resource[MonoPropellant]&mlf=r.resourceMax[LiquidFuel]&moxidizer=r.resourceMax[Oxidizer]&mmono=r.resourceMax[MonoPropellant]"
     try:
         u = urllib2.urlopen(url)
         d = json.load(u)
@@ -101,6 +101,7 @@ def fetchData():
         d["alt"] = " "		#Altitude
         d["hat"] = " "		#Height above terrain
         d["mt"] = " "		#Mission time
+        d["ut"] = " "		#Universal time
         d["sfcv"] = " "		#SFC velocity
         d["ov"] = " "		#Orbital velocity
         d["vs"] = " "		#Vertical speed
@@ -129,6 +130,10 @@ def fetchData():
         d["ecc"] = " "		#Eccentricity
         d["aope"] = " "		#Argument of PE
         d["lan"] = " "		#Longitude of AN
+        d["lf"] = " "		#Liquid Fuel
+        d["oxidizer"] = " "	#Oxidizer
+        d["mlf"] = " "		#Max liquid fuel
+        d["moxidizer"] = " "	#Max oxidizer
         d["tstatus"] = 0
     return d
 
@@ -148,6 +153,8 @@ def getRadar(d):
     minralt = 500 #min radar altitude
     d["ralt"] = rAlt(rSlop(d["alt"]))
     d["rpe"] = rAlt(rSlop(d["pe"]))
+    if isNum(d["rpe"]) and d["rpe"] < 0:
+        d["rpe"] = 0
     d["rap"] = rAlt(rSlop(d["ap"]))
     if isNum(d["sma"]):
         d["smag"] = rAlt(rSlop(d["sma"] - 600000))
@@ -209,6 +216,9 @@ def getRadar(d):
     return d
 
 def getTelemetry(d):
+    maxgralt = "15000" #max altitude for ground radar
+    if isNum(d["pe"]) and d["pe"] < 0:
+        d["pe"] = 0
     d["lat"] = rSlop(d["lat"])
     d["long"] = rSlop(d["long"])
     d["altt"] = "?"
@@ -219,6 +229,16 @@ def getTelemetry(d):
             d["altt"] = "+"
         if int(d["vs"]) == 0:
             d["altt"] = " "
+        d["hs"] = d["sfcv"] - abs(d["vs"])
+        d["vs"] = abs(d["vs"])
+    d["asl"] = d["alt"]
+    if isNum(d["asl"]):
+        if d["hat"] == -1 or d["hat"] > maxgralt:
+            d["hat"] = "MAX"
+            d["asl"] = " "
+            d["vs"] = " "
+            d["hs"] = " "
+            d["sfcv"] = " "
     if checkTelemetry(d["pstat"]):
         return d
     else:
@@ -256,6 +276,26 @@ def pvel(num):
         nnum = num
     return nnum
 
+def phbar(num,mnum):
+    if isNum(num) and isNum(mnum):
+        pnum = int((num / mnum) * 100)
+        onum = xstr(" " + "{:,}".format(int(num))) + " (%s)" % pnum
+    else:
+        onum = num
+    return onum
+
+def printhbar(win,instr,perc):
+    i = 0
+    barperc = int(20 * perc)
+    barstring = instr.ljust(20)
+    while i < 19:
+        if i < barperc:
+            win.addstr(barstring[i],curses.A_REVERSE)
+        else:
+            pass
+            win.addstr(barstring[i])
+        i = i + 1
+   
 def pdeg(inum):
     if isNum(inum):
         num = xstr(abs(int(inum))).zfill(3)
@@ -354,6 +394,20 @@ def init_time_window(win,y,x):
 def draw_time_window(win,data):
     win.addstr(1,1,"           ",curses.A_BOLD)
     win.addstr(1,1,pltime(data["mt"]),curses.A_BOLD)
+    win.refresh()
+
+def init_utime_window(win,y,x):
+    utimewin = curses.newwin(2,14,y,x)
+    utimewin.box()
+    utimewin.bkgd(curses.color_pair(1));
+    win.refresh()        
+    utimewin.addstr(0,1,"UNIVRSL TIME",curses.A_BOLD)
+    utimewin.refresh()
+    return utimewin
+
+def draw_utime_window(win,data):
+    win.addstr(1,1,"           ",curses.A_BOLD)
+    win.addstr(1,1,pltime(data["ut"]),curses.A_BOLD)
     win.refresh()
 
 def init_sys_window(win,y,x):
@@ -458,39 +512,6 @@ def draw_rpos_window(win,data):
     win.addstr(6,8,ptime(data["rttpe"]),curses.A_BOLD)
     win.refresh()
 
-def init_rorb_window(win,y,x):
-    rowin = curses.newwin(9,18,y,x)
-    rowin.box()
-    rowin.bkgd(curses.color_pair(1));
-    win.refresh()
-    rowin.addstr(0,1,"R.ORBIT",curses.A_BOLD)
-    rowin.addstr(1,1,"R.SMAG ")
-    rowin.addstr(2,1,"  R.AP ")
-    rowin.addstr(3,1,"  R.PE ")
-    rowin.addstr(4,1," R.INC ")
-    rowin.addstr(5,1," R.LAN ")
-    rowin.addstr(6,1,"R.OPRD ")
-    rowin.addstr(7,1,"R.OVEL ")
-    rowin.refresh()
-    return rowin
-
-def draw_rorb_window(win,data):
-    win.addstr(1,8,"         ",curses.A_BOLD)
-    win.addstr(2,8,"         ",curses.A_BOLD)
-    win.addstr(3,8,"         ",curses.A_BOLD)
-    win.addstr(4,8,"         ",curses.A_BOLD)
-    win.addstr(5,8,"         ",curses.A_BOLD)
-    win.addstr(6,8,"         ",curses.A_BOLD)
-    win.addstr(7,8,"         ",curses.A_BOLD)
-    win.addstr(1,8,palt(data["smag"]),curses.A_BOLD)
-    win.addstr(2,8,palt(data["rap"]),curses.A_BOLD)
-    win.addstr(3,8,palt(data["rpe"]),curses.A_BOLD)
-    win.addstr(4,8,pdeg(data["rinc"]),curses.A_BOLD)
-    win.addstr(5,8,plong(data["rlan"]),curses.A_BOLD)
-    win.addstr(6,8,ptime(data["roperiod"]),curses.A_BOLD)
-    win.addstr(7,8,pvel(data["rov"]),curses.A_BOLD)
-    win.refresh()
-
 def init_orbit_window(win,y,x):
     owin = curses.newwin(9,18,y,x)
     owin.box()
@@ -524,38 +545,170 @@ def draw_orbit_window(win,data):
     win.addstr(7,8,pvel(data["ov"]),curses.A_BOLD)
     win.refresh()
 
+def init_rorb_window(win,y,x):
+    rowin = curses.newwin(9,18,y,x)
+    rowin.box()
+    rowin.bkgd(curses.color_pair(1));
+    win.refresh()
+    rowin.addstr(0,1,"R.ORBIT",curses.A_BOLD)
+    rowin.addstr(1,1,"R.SMAG ")
+    rowin.addstr(2,1,"  R.AP ")
+    rowin.addstr(3,1,"  R.PE ")
+    rowin.addstr(4,1," R.INC ")
+    rowin.addstr(5,1," R.LAN ")
+    rowin.addstr(6,1,"R.OPRD ")
+    rowin.addstr(7,1,"R.OVEL ")
+    rowin.refresh()
+    return rowin
+
+def draw_rorb_window(win,data):
+    win.addstr(1,8,"         ",curses.A_BOLD)
+    win.addstr(2,8,"         ",curses.A_BOLD)
+    win.addstr(3,8,"         ",curses.A_BOLD)
+    win.addstr(4,8,"         ",curses.A_BOLD)
+    win.addstr(5,8,"         ",curses.A_BOLD)
+    win.addstr(6,8,"         ",curses.A_BOLD)
+    win.addstr(7,8,"         ",curses.A_BOLD)
+    win.addstr(1,8,palt(data["smag"]),curses.A_BOLD)
+    win.addstr(2,8,palt(data["rap"]),curses.A_BOLD)
+    win.addstr(3,8,palt(data["rpe"]),curses.A_BOLD)
+    win.addstr(4,8,pdeg(data["rinc"]),curses.A_BOLD)
+    win.addstr(5,8,plong(data["rlan"]),curses.A_BOLD)
+    win.addstr(6,8,ptime(data["roperiod"]),curses.A_BOLD)
+    win.addstr(7,8,pvel(data["rov"]),curses.A_BOLD)
+    win.refresh()
+
+def init_sfc_window(win,y,x):
+    sfcwin = curses.newwin(7,18,y,x)
+    sfcwin.box()
+    sfcwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    sfcwin.addstr(0,1,"T.GND RADAR",curses.A_BOLD)
+    sfcwin.addstr(1,1," T.HAT ")
+    sfcwin.addstr(2,1," T.ASL ")
+    sfcwin.addstr(3,1,"  T.VS ")
+    sfcwin.addstr(4,1,"  T.HS ")
+    sfcwin.addstr(5,1,"T.SFCV ")
+    sfcwin.refresh()
+    return sfcwin
+
+def draw_sfc_window(win,data):
+    win.addstr(1,8,"         ",curses.A_BOLD)
+    win.addstr(2,8,"         ",curses.A_BOLD)
+    win.addstr(3,8,"         ",curses.A_BOLD)
+    win.addstr(4,8,"         ",curses.A_BOLD)
+    win.addstr(5,8,"         ",curses.A_BOLD)
+    win.addstr(1,8,palt(data["hat"]),curses.A_BOLD)
+    win.addstr(2,8,palt(data["asl"]),curses.A_BOLD)
+    win.addstr(3,7,pvel(data["altt"]),curses.A_BOLD)
+    win.addstr(3,8,pvel(data["vs"]),curses.A_BOLD)
+    win.addstr(4,8,pvel(data["hs"]),curses.A_BOLD)
+    win.addstr(5,8,pvel(data["sfcv"]),curses.A_BOLD)
+    win.refresh()
+
+def init_lfuel_window(win,y,x):
+    fuelwin = curses.newwin(3,22,y,x)
+    fuelwin.box()
+    fuelwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    fuelwin.addstr(0,1,"T.LIQUIDFUEL",curses.A_BOLD)
+    fuelwin.refresh()
+    return fuelwin
+
+def draw_lfuel_window(win,data):
+    win.addstr(1,1,"                    ",curses.A_BOLD)
+    fuelbar = phbar(data["lf"],data["mlf"])
+    fuelperc = data["lf"] / data["mlf"]
+    win.move(1,1)
+    printhbar(win,fuelbar,fuelperc)
+    win.refresh()
+
+def init_oxi_window(win,y,x):
+    oxiwin = curses.newwin(3,22,y,x)
+    oxiwin.box()
+    oxiwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    oxiwin.addstr(0,1,"T.OXIDIZER",curses.A_BOLD)
+    oxiwin.refresh()
+    return oxiwin
+
+def draw_oxi_window(win,data):
+    win.addstr(1,1,"                    ",curses.A_BOLD)
+    oxibar = phbar(data["oxidizer"],data["moxidizer"])
+    oxiperc = data["oxidizer"] / data["moxidizer"]
+    win.move(1,1)
+    printhbar(win,oxibar,oxiperc)    
+    win.refresh()
+
+def init_mono_window(win,y,x):
+    monowin = curses.newwin(3,22,y,x)
+    monowin.box()
+    monowin.bkgd(curses.color_pair(1));
+    win.refresh()
+    monowin.addstr(0,1,"T.MONOPROP",curses.A_BOLD)
+    monowin.refresh()
+    return monowin
+
+def draw_mono_window(win,data):
+    win.addstr(1,1,"                   ",curses.A_BOLD)
+    monobar = phbar(data["mono"],data["mmono"])
+    monoperc = data["mono"] / data["mmono"]
+    win.move(1,1)
+    printhbar(win,monobar,monoperc)
+    win.refresh()
+
 def mainloop(win):
     timeposx = 0
     timeposy = 1
+    utimeposx = 15
+    utimeposy = 1
     tposx = 0
     tposy = 3
-    rposx = 18
+    rposx = 19
     roposy = 3
-    roposx = 54
+    roposx = 57
     rposy = 3
-    oposx = 36
+    oposx = 38
     oposy = 3
-    sysx = 14
+    sysx = 30
     sysy = 1
+    sfcx = 57
+    sfcy = 12
+    fuelx = 0
+    fuely = 14
+    oxix = 0
+    oxiy = 17
+    monox = 0
+    monoy = 20
     win.nodelay(1)
     init_window(win)
     timewin = init_time_window(win,timeposy,timeposx)
+    utimewin = init_utime_window(win,utimeposy,utimeposx)
     syswin = init_sys_window(win,sysy,sysx)
     twin = init_tpos_window(win,tposy,tposx)
     rwin = init_rpos_window(win,rposy,rposx)
     rowin = init_rorb_window(win,roposy,roposx)
     owin = init_orbit_window(win,oposy,oposx)
+    sfcwin = init_sfc_window(win,sfcy,sfcx)
+    lfuelwin = init_lfuel_window(win,fuely,fuelx)
+    oxiwin = init_oxi_window(win,oxiy,oxix)
+    monowin = init_mono_window(win,monoy,monox)
     while 1 is 1:
         data = fetchData()
         radar = getRadar(data)
         tele = getTelemetry(data)
         write_datetime(win)
         draw_time_window(timewin,tele)
+        draw_utime_window(utimewin,tele)
         draw_sys_window(syswin,tele)
         draw_tpos_window(twin,tele)
         draw_rpos_window(rwin,radar)
         draw_rorb_window(rowin,radar)
         draw_orbit_window(owin,tele)
+        draw_sfc_window(sfcwin,tele)
+        draw_lfuel_window(lfuelwin,tele)
+        draw_oxi_window(oxiwin,tele)
+        draw_mono_window(monowin,tele)
         time.sleep(1)
 
 def startup():
