@@ -159,7 +159,10 @@ def getRadar(d):
     d["rttap"] = d["ttap"]
     d["rttpe"] = d["ttpe"]
     d["rsfcv"] = d["sfcv"]
-    d["rhs"] = d["sfcv"] - abs(d["vs"])
+    if isNum(d["vs"]):
+       d["rhs"] = d["sfcv"] - abs(d["vs"])
+    else:
+       d["rhs"] = " "
     d["rvs"] = d["vs"]
     d["rinc"] = d["inc"]
     d["rlan"] = d["lan"]
@@ -241,8 +244,11 @@ def getTelemetry(d):
             d["altt"] = "+"
         if int(d["vs"]) == 0:
             d["altt"] = " "
-        d["hs"] = d["sfcv"] - abs(d["vs"])
-        d["vs"] = abs(d["vs"])
+        if isNum(d["vs"]):
+            d["hs"] = d["sfcv"] - abs(d["vs"])
+            d["vs"] = abs(d["vs"])
+        else:
+            d["hs"] = " "
     d["asl"] = d["alt"]
     if isNum(d["asl"]):
         if d["hat"] == -1 or d["hat"] > maxgralt:
