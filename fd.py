@@ -144,7 +144,7 @@ def fetchData():
 #    return 0
 
 def getRadar(d):
-    maxralt = 7000000 #max radar altitude
+    maxralt = 1000000 #max radar altitude
     minralt = 500 #min radar altitude
     d["ralt"] = rAlt(rSlop(d["alt"]))
     d["rpe"] = rAlt(rSlop(d["pe"]))
@@ -155,6 +155,8 @@ def getRadar(d):
         d["smag"] = "ERR!"
     d["rlat"] = d["lat"]
     d["rlong"] = d["long"]
+    d["rttap"] = d["ttap"]
+    d["rttpe"] = d["ttpe"]
     d["rinc"] = d["inc"]
     d["rlan"] = d["lan"]
     d["roperiod"] = d["operiod"]
@@ -373,6 +375,8 @@ def draw_sys_window(win,data):
         win.addstr(1,9,"LGT",curses.A_REVERSE)
     if isNum(data["alt"]):
         win.addstr(1,13,"TEL",curses.A_REVERSE)
+    else:
+        win.addstr(1,1,"???|???|???")
     if isNum(data["ralt"]):
         win.addstr(1,17,"RAD",curses.A_REVERSE)
     else:
@@ -394,11 +398,11 @@ def init_tpos_window(win,y,x):
     twin.addstr(2,1," T.ALT ")
     twin.addstr(3,1," T.LAT ")
     twin.addstr(4,1,"T.LONG ")
-    twin.addstr(5,1," T.PIT ")
-    twin.addstr(6,1," T.ROL ")
-    twin.addstr(7,1," T.HDG ")
-    twin.addstr(8,1," TT AP ")
-    twin.addstr(9,1," TT PE ")
+    twin.addstr(5,1,"T.TTAP ")
+    twin.addstr(6,1,"T.TTPE ")
+    twin.addstr(7,1," T.PIT ")
+    twin.addstr(8,1," T.ROL ")
+    twin.addstr(9,1," T.HDG ")
     twin.refresh()
     return twin
 
@@ -411,20 +415,21 @@ def draw_tpos_window(win,data):
     win.addstr(6,8,"         ",curses.A_BOLD)
     win.addstr(7,8,"         ",curses.A_BOLD)
     win.addstr(8,8,"         ",curses.A_BOLD)
+    win.addstr(9,8,"         ",curses.A_BOLD)
     win.addstr(1,8,pnum(data["body"]).upper(),curses.A_BOLD)
     win.addstr(2,7,pnum(data["altt"]))
     win.addstr(2,8,palt(data["alt"]),curses.A_BOLD)
     win.addstr(3,8,plat(data["lat"]),curses.A_BOLD)
     win.addstr(4,8,plong(data["long"]),curses.A_BOLD)
-    win.addstr(5,8,pdeg(data["pitch"]),curses.A_BOLD)
-    win.addstr(6,8,pdeg(data["roll"]),curses.A_BOLD)
-    win.addstr(7,8,pdeg(data["hdg"]),curses.A_BOLD)
-    win.addstr(8,8,ptime(data["ttap"]),curses.A_BOLD)
-    win.addstr(9,8,ptime(data["ttpe"]),curses.A_BOLD)
+    win.addstr(5,8,ptime(data["ttap"]),curses.A_BOLD)
+    win.addstr(6,8,ptime(data["ttpe"]),curses.A_BOLD)
+    win.addstr(7,8,pdeg(data["pitch"]),curses.A_BOLD)
+    win.addstr(8,8,pdeg(data["roll"]),curses.A_BOLD)
+    win.addstr(9,8,pdeg(data["hdg"]),curses.A_BOLD)
     win.refresh()
 
 def init_rpos_window(win,y,x):
-    rwin = curses.newwin(6,18,y,x)
+    rwin = curses.newwin(8,18,y,x)
     rwin.box()
     rwin.bkgd(curses.color_pair(1));
     win.refresh()
@@ -433,6 +438,8 @@ def init_rpos_window(win,y,x):
     rwin.addstr(2,1," R.ALT ")
     rwin.addstr(3,1," R.LAT ")
     rwin.addstr(4,1,"R.LONG ")
+    rwin.addstr(5,1,"R.TTAP ")
+    rwin.addstr(6,1,"R.TTPE ")
     rwin.refresh()
     return rwin
 
@@ -441,10 +448,14 @@ def draw_rpos_window(win,data):
     win.addstr(2,8,"         ",curses.A_BOLD)
     win.addstr(3,8,"         ",curses.A_BOLD)
     win.addstr(4,8,"         ",curses.A_BOLD)
+    win.addstr(5,8,"         ",curses.A_BOLD)
+    win.addstr(6,8,"         ",curses.A_BOLD)
     win.addstr(1,8,pnum(data["rstatus"]).upper(),curses.A_BOLD)
     win.addstr(2,8,palt(data["ralt"]),curses.A_BOLD)
     win.addstr(3,8,plat(data["rlat"]),curses.A_BOLD)
     win.addstr(4,8,plong(data["rlong"]),curses.A_BOLD)
+    win.addstr(5,8,ptime(data["rttap"]),curses.A_BOLD)
+    win.addstr(6,8,ptime(data["rttpe"]),curses.A_BOLD)
     win.refresh()
 
 def init_rorb_window(win,y,x):
