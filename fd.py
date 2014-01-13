@@ -149,7 +149,7 @@ def fetchData():
 #    return 0
 
 def getRadar(d):
-    maxralt = 1000000 #max radar altitude
+    maxralt = 70000 #max radar altitude
     minralt = 500 #min radar altitude
     d["ralt"] = rAlt(rSlop(d["alt"]))
     d["rpe"] = rAlt(rSlop(d["pe"]))
@@ -164,6 +164,9 @@ def getRadar(d):
     d["rlong"] = d["long"]
     d["rttap"] = d["ttap"]
     d["rttpe"] = d["ttpe"]
+    d["rsfcv"] = d["sfcv"]
+    d["rhs"] = d["sfcv"] - abs(d["vs"])
+    d["rvs"] = d["vs"]
     d["rinc"] = d["inc"]
     d["rlan"] = d["lan"]
     d["roperiod"] = d["operiod"]
@@ -174,6 +177,8 @@ def getRadar(d):
         d["ralt"] = "N/A"
         d["rpe"] = " "
         d["rap"] = " "
+        d["rttpe"] = " "
+        d["rttap"] = " "
         d["rlat"] = " "
         d["rlong"] = " "
         d["smag"] = "N/A"
@@ -181,11 +186,16 @@ def getRadar(d):
         d["rlan"] = " "
         d["roperiod"] = " "
         d["rov"] = " "
+        d["rhs"] = " "
+        d["rvs"] = " "
+        d["rsfcv"] = " "
         d["rstatus"] = "UNAVAIL"
     if d["alt"] > maxralt:
         d["ralt"] = "MAX"
         d["rpe"] = " "
         d["rap"] = " "
+        d["rttpe"] = " "
+        d["rttap"] = " "
         d["rlat"] = " "
         d["rlong"] = " "
         d["smag"] = "MAX"
@@ -193,11 +203,16 @@ def getRadar(d):
         d["rlan"] = " "
         d["roperiod"] = " "
         d["rov"] = " "
+        d["rhs"] = " "
+        d["rvs"] = " "
+        d["rsfcv"] = " "
         d["rstatus"] = "UNAVAIL"
     if d["alt"] < minralt:
         d["ralt"] = "MIN"
         d["rpe"] = " "
         d["rap"] = " "
+        d["rttpe"] = " "
+        d["rttap"] = " "
         d["rlat"] = " "
         d["rlong"] = " "
         d["smag"] = "MIN"
@@ -205,6 +220,9 @@ def getRadar(d):
         d["rlan"] = " "
         d["roperiod"] = " "
         d["rov"] = " "
+        d["rhs"] = " "
+        d["rvs"] = " "
+        d["rsfcv"] = " "
         d["rstatus"] = "UNAVAIL"    
     if isNum(d["ralt"]):
         if d["ralt"] > 100000:
@@ -286,9 +304,9 @@ def phbar(num,mnum):
 
 def printhbar(win,instr,perc):
     i = 0
-    barperc = int(20 * perc)
-    barstring = instr.ljust(20)
-    while i < 19:
+    barperc = int(35 * perc)
+    barstring = instr.ljust(35)
+    while i < 34:
         if i < barperc:
             win.addstr(barstring[i],curses.A_REVERSE)
         else:
@@ -483,7 +501,7 @@ def draw_tpos_window(win,data):
     win.refresh()
 
 def init_rpos_window(win,y,x):
-    rwin = curses.newwin(8,18,y,x)
+    rwin = curses.newwin(11,18,y,x)
     rwin.box()
     rwin.bkgd(curses.color_pair(1));
     win.refresh()
@@ -494,6 +512,9 @@ def init_rpos_window(win,y,x):
     rwin.addstr(4,1,"R.LONG ")
     rwin.addstr(5,1,"R.TTAP ")
     rwin.addstr(6,1,"R.TTPE ")
+    rwin.addstr(7,1,"  R.VS ")
+    rwin.addstr(8,1,"  R.HS ")
+    rwin.addstr(9,1,"R.SFCV ")
     rwin.refresh()
     return rwin
 
@@ -504,12 +525,18 @@ def draw_rpos_window(win,data):
     win.addstr(4,8,"         ",curses.A_BOLD)
     win.addstr(5,8,"         ",curses.A_BOLD)
     win.addstr(6,8,"         ",curses.A_BOLD)
+    win.addstr(7,8,"         ",curses.A_BOLD)
+    win.addstr(8,8,"         ",curses.A_BOLD)
+    win.addstr(9,8,"         ",curses.A_BOLD)
     win.addstr(1,8,pnum(data["rstatus"]).upper(),curses.A_BOLD)
     win.addstr(2,8,palt(data["ralt"]),curses.A_BOLD)
     win.addstr(3,8,plat(data["rlat"]),curses.A_BOLD)
     win.addstr(4,8,plong(data["rlong"]),curses.A_BOLD)
     win.addstr(5,8,ptime(data["rttap"]),curses.A_BOLD)
     win.addstr(6,8,ptime(data["rttpe"]),curses.A_BOLD)
+    win.addstr(7,8,pvel(data["rvs"]),curses.A_BOLD)
+    win.addstr(8,8,pvel(data["rhs"]),curses.A_BOLD)
+    win.addstr(9,8,pvel(data["rsfcv"]),curses.A_BOLD)
     win.refresh()
 
 def init_orbit_window(win,y,x):
@@ -607,7 +634,7 @@ def draw_sfc_window(win,data):
     win.refresh()
 
 def init_lfuel_window(win,y,x):
-    fuelwin = curses.newwin(3,22,y,x)
+    fuelwin = curses.newwin(3,37,y,x)
     fuelwin.box()
     fuelwin.bkgd(curses.color_pair(1));
     win.refresh()
@@ -624,7 +651,7 @@ def draw_lfuel_window(win,data):
     win.refresh()
 
 def init_oxi_window(win,y,x):
-    oxiwin = curses.newwin(3,22,y,x)
+    oxiwin = curses.newwin(3,37,y,x)
     oxiwin.box()
     oxiwin.bkgd(curses.color_pair(1));
     win.refresh()
@@ -641,7 +668,7 @@ def draw_oxi_window(win,data):
     win.refresh()
 
 def init_mono_window(win,y,x):
-    monowin = curses.newwin(3,22,y,x)
+    monowin = curses.newwin(3,37,y,x)
     monowin.box()
     monowin.bkgd(curses.color_pair(1));
     win.refresh()
