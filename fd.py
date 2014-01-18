@@ -82,64 +82,71 @@ def checkTelemetry(pstat):
     else:
         return False
 
+def badtele(olddata):
+    d = olddata
+#        d["throt"] = " "	#Throttle
+#        d["rcs"] = " "		#RCS status
+#        d["sas"] = " "		#SAS status
+#        d["light"] = " "	#Lights status
+#        d["pe"] = " "		#PE
+#        d["ap"] = " "		#AP
+#        d["ttap"] = " "		#Time to AP
+#        d["ttpe"] = " "		#Time to PE
+#        d["operiod"] = " "	#Orbital period
+#        d["sma"] = " "		#SMA
+    d["alt"] = "ERR!"		#Altitude
+#        d["hat"] = " "		#Height above terrain
+#        d["mt"] = " "		#Mission time
+#        d["ut"] = " "		#Universal time
+#        d["sfcv"] = " "		#SFC velocity
+#        d["ov"] = " "		#Orbital velocity
+#        d["vs"] = " "		#Vertical speed
+#        d["lat"] = " "		#Latitude
+#        d["long"] = " "		#Longitude
+#        d["body"] = " "		#Orbital body
+#        d["o2"] = " "		#Oxygen
+#        d["co2"] = " "		#Carbon dioxide
+#        d["h2o"] = " "		#Water
+#        d["w"] = " "		#Electric charge
+#        d["food"] = " "		#Food
+#        d["waste"] = " "	#Solid waste
+#        d["wastewater"] = " "	#Liquid waste
+#        d["mo2"] = " "		#Max oxygen
+#        d["mco2"] = " "		#Max carbon dioxide
+#        d["mh2o"] = " "		#Max water
+#        d["mw"] = " "		#Max electric charge
+#        d["mfood"] = " "	#Max food
+#        d["mwaste"] = " "	#Max solid waste
+#        d["mwastewater"] = " "	#Max liquid waste
+    d["pitch"] = " "	#Pitch degrees
+    d["roll"] = " "		#Roll degrees
+    d["hdg"] = " "		#Heading degrees
+#        d["pstat"] = "1"	#Telemetry status
+#        d["inc"] = " "		#Inclination
+#        d["ecc"] = " "		#Eccentricity
+#        d["aope"] = " "		#Argument of PE
+#        d["lan"] = " "		Longitude of AN
+#        d["lf"] = " "		#Liquid Fuel
+#        d["oxidizer"] = " "	#Oxidizer
+#        d["mlf"] = " "		#Max liquid fuel
+#        d["moxidizer"] = " "	#Max oxidizer
+    d["tstatus"] = 0
+    return d
+
 def fetchData():
     global olddata
-    d = {'alt':'ERR!','altt':'?'}
-    url = "http://108.196.82.116:8023/telemachus/datalink?throt=f.throttle&rcs=v.rcsValue&sas=v.sasValue&light=v.lightValue&pe=o.PeA&ap=o.ApA&ttap=o.timeToAp&ttpe=o.timeToPe&operiod=o.period&sma=o.sma&alt=v.altitude&hat=v.heightFromTerrain&mt=v.missionTime&sfcv=v.surfaceVelocity&ov=v.orbitalVelocity&vs=v.verticalSpeed&lat=v.lat&long=v.long&body=v.body&o2=r.resource[Oxygen]&co2=r.resource[CarbonDioxide]&h2o=r.resource[Water]&w=r.resource[ElectricCharge]&food=r.resource[Food]&waste=r.resource[Waste]&wastewater=r.resource[WasteWater]&mo2=r.resourceMax[Oxygen]&mco2=r.resourceMax[CarbonDioxide]&mh2o=r.resourceMax[Water]&mw=r.resourceMax[ElectricCharge]&mfood=r.resourceMax[Food]&mwaste=r.resourceMax[Waste]&mwastewater=r.resourceMax[WasteWater]&pitch=n.pitch&roll=n.roll&hdg=n.heading&pstat=p.paused&inc=o.inclination&ecc=o.eccentricity&aoe=o.argumentOfPeriapsis&lan=o.lan&ut=t.universalTime&lf=r.resource[LiquidFuel]&oxidizer=r.resource[Oxidizer]&mono=r.resource[MonoPropellant]&mlf=r.resourceMax[LiquidFuel]&moxidizer=r.resourceMax[Oxidizer]&mmono=r.resourceMax[MonoPropellant]"
+#    d = {'alt':'ERR!','altt':'?'}
+#    ip = "192.168.1.40:8023"
+#    ip = "108.196.82.116:8023"
+    url = "http://" + str(ip) + "/telemachus/datalink?throt=f.throttle&rcs=v.rcsValue&sas=v.sasValue&light=v.lightValue&pe=o.PeA&ap=o.ApA&ttap=o.timeToAp&ttpe=o.timeToPe&operiod=o.period&sma=o.sma&alt=v.altitude&hat=v.heightFromTerrain&mt=v.missionTime&sfcs=v.surfaceSpeed&sfcv=v.surfaceVelocity&sfcvx=v.surfaceVelocityx&sfcvy=v.surfaceVelocityy&sfcvz=v.surfaceVelocityz&ov=v.orbitalVelocity&vs=v.verticalSpeed&lat=v.lat&long=v.long&body=v.body&o2=r.resource[Oxygen]&co2=r.resource[CarbonDioxide]&h2o=r.resource[Water]&w=r.resource[ElectricCharge]&food=r.resource[Food]&waste=r.resource[Waste]&wastewater=r.resource[WasteWater]&mo2=r.resourceMax[Oxygen]&mco2=r.resourceMax[CarbonDioxide]&mh2o=r.resourceMax[Water]&mw=r.resourceMax[ElectricCharge]&mfood=r.resourceMax[Food]&mwaste=r.resourceMax[Waste]&mwastewater=r.resourceMax[WasteWater]&pitch=n.pitch&roll=n.roll&hdg=n.heading&pstat=p.paused&inc=o.inclination&ecc=o.eccentricity&aoe=o.argumentOfPeriapsis&lan=o.lan&ut=t.universalTime&lf=r.resource[LiquidFuel]&oxidizer=r.resource[Oxidizer]&mono=r.resource[MonoPropellant]&mlf=r.resourceMax[LiquidFuel]&moxidizer=r.resourceMax[Oxidizer]&mmono=r.resourceMax[MonoPropellant]"
     try:
         u = urllib2.urlopen(url)
         d = json.load(u)
         d["tstatus"] = 1
-        olddata = d
+        if checkTelemetry(d["pstat"]):
+            olddata = d
     except:
-        d["throt"] = " "	#Throttle
-        d["rcs"] = " "		#RCS status
-        d["sas"] = " "		#SAS status
-        d["light"] = " "	#Lights status
-        d["pe"] = " "		#PE
-        d["ap"] = " "		#AP
-        d["ttap"] = " "		#Time to AP
-        d["ttpe"] = " "		#Time to PE
-        d["operiod"] = " "	#Orbital period
-        d["sma"] = " "		#SMA
-        d["alt"] = " "		#Altitude
-        d["hat"] = " "		#Height above terrain
-        d["mt"] = " "		#Mission time
-        d["ut"] = " "		#Universal time
-        d["sfcv"] = " "		#SFC velocity
-        d["ov"] = " "		#Orbital velocity
-        d["vs"] = " "		#Vertical speed
-        d["lat"] = " "		#Latitude
-        d["long"] = " "		#Longitude
-        d["body"] = " "		#Orbital body
-        d["o2"] = " "		#Oxygen
-        d["co2"] = " "		#Carbon dioxide
-        d["h2o"] = " "		#Water
-        d["w"] = " "		#Electric charge
-        d["food"] = " "		#Food
-        d["waste"] = " "	#Solid waste
-        d["wastewater"] = " "	#Liquid waste
-        d["mo2"] = " "		#Max oxygen
-        d["mco2"] = " "		#Max carbon dioxide
-        d["mh2o"] = " "		#Max water
-        d["mw"] = " "		#Max electric charge
-        d["mfood"] = " "	#Max food
-        d["mwaste"] = " "	#Max solid waste
-        d["mwastewater"] = " "	#Max liquid waste
-        d["pitch"] = " "	#Pitch degrees
-        d["roll"] = " "		#Roll degrees
-        d["hdg"] = " "		#Heading degrees
-        d["pstat"] = "1"	#Telemetry status
-        d["inc"] = " "		#Inclination
-        d["ecc"] = " "		#Eccentricity
-        d["aope"] = " "		#Argument of PE
-        d["lan"] = " "		#Longitude of AN
-        d["lf"] = " "		#Liquid Fuel
-        d["oxidizer"] = " "	#Oxidizer
-        d["mlf"] = " "		#Max liquid fuel
-        d["moxidizer"] = " "	#Max oxidizer
-        d["tstatus"] = 0
-        d = olddata
+        d = badtele(olddata)
     return d
 
 def getRadar(d):
@@ -151,16 +158,18 @@ def getRadar(d):
         d["rpe"] = 0
     d["rap"] = rAlt(rSlop(d["ap"]))
     if isNum(d["sma"]):
-        d["smag"] = rAlt(rSlop(d["sma"] - 600000))
+        d["smag"] = rAlt(rSlop(d["sma"]))
     else:
         d["smag"] = "ERR!"
+    if d["smag"] < 0:
+        d["smag"] = 0
     d["rlat"] = d["lat"]
     d["rlong"] = d["long"]
     d["rttap"] = d["ttap"]
     d["rttpe"] = d["ttpe"]
-    d["rsfcv"] = d["sfcv"]
+    d["rsfcs"] = d["sfcs"]
     if isNum(d["vs"]):
-       d["rhs"] = d["sfcv"] - abs(d["vs"])
+       d["rhs"] = d["sfcs"] - abs(d["vs"])
     else:
        d["rhs"] = " "
     d["rvs"] = d["vs"]
@@ -185,7 +194,7 @@ def getRadar(d):
         d["rov"] = " "
         d["rhs"] = " "
         d["rvs"] = " "
-        d["rsfcv"] = " "
+        d["rsfcs"] = " "
         d["rstatus"] = "UNAVAIL"
     if d["alt"] > maxralt:
         d["ralt"] = "MAX"
@@ -202,7 +211,7 @@ def getRadar(d):
         d["rov"] = " "
         d["rhs"] = " "
         d["rvs"] = " "
-        d["rsfcv"] = " "
+        d["rsfcs"] = " "
         d["rstatus"] = "UNAVAIL"
     if d["alt"] < minralt:
         d["ralt"] = "MIN"
@@ -219,7 +228,7 @@ def getRadar(d):
         d["rov"] = " "
         d["rhs"] = " "
         d["rvs"] = " "
-        d["rsfcv"] = " "
+        d["rsfcs"] = " "
         d["rstatus"] = "UNAVAIL"    
     if isNum(d["ralt"]):
         if d["ralt"] > 100000:
@@ -245,39 +254,35 @@ def getTelemetry(d):
         if int(d["vs"]) == 0:
             d["altt"] = " "
         if isNum(d["vs"]):
-            d["hs"] = d["sfcv"] - abs(d["vs"])
+            d["hs"] = d["sfcs"] - abs(d["vs"])
             d["vs"] = abs(d["vs"])
         else:
             d["hs"] = " "
     d["asl"] = d["alt"]
     if isNum(d["asl"]):
         if d["hat"] == -1 or d["hat"] > maxgralt:
+            d["grstatus"] = "UNAVAIL"
             d["hat"] = "MAX"
             d["asl"] = " "
             d["vs"] = " "
             d["hs"] = " "
             d["sfcv"] = " "
+            d["sfcvx"] = " "
+            d["sfcvy"] = " "
+            d["sfcvz"] = " "
+        else:
+            d["grstatus"] = "NOMINAL"
     if checkTelemetry(d["pstat"]):
         return d
     else:
-        d["alt"] = "ERR!"
-        d["altt"] = "?"
-        d["lat"] = " "
-        d["long"] = " "
-        d["pitch"] = "0"
-        d["roll"] = "0"
-        d["hdg"] = "0"
-        d["ttap"] = " "
-        d["ttpe"] = " "
+        d = badtele(olddata)
+#        d["alt"] = "ERR!"
+#        d["altt"] = "?"
+#        d["pitch"] = "0"
+#        d["roll"] = "0"
+#        d["hdg"] = "0"
+        d["grstatus"] = "UNAVAIL"
         d["sma"] = "ERR!"
-        d["ap"] = " "
-        d["pe"] = " "
-        d["inc"] = " "
-        d["ecc"] = " "
-        d["lan"] = " "
-        d["aop"] = " "
-        d["ov"] = " "
-        d["operiod"] = " "
         return d
 
 def pnum(num):
@@ -302,17 +307,46 @@ def phbar(num,mnum):
         onum = num
     return onum
 
+def printwarn(win,warn,state):
+    if state == 0:
+        win.addstr(1,1,warn,curses.A_BOLD)
+    else:
+        win.addstr(1,1,warn,curses.A_BLINK + curses.A_REVERSE)
+
 def printhbar(win,instr,perc):
     i = 0
     barperc = int(35 * perc)
     barstring = instr.ljust(35)
-    while i < 34:
+    while i < 35:
         if i < barperc:
             win.addstr(barstring[i],curses.A_REVERSE)
         else:
-            pass
             win.addstr(barstring[i])
         i = i + 1
+
+def printvbar(win,perc):
+    i = 0
+    output = format(xstr(int(perc * 100)),">3s")
+    barperc = int(9 * perc)
+    while i < 9:
+        if i < barperc:
+            win.addstr(9-i,1,output,curses.A_REVERSE)
+        else:
+            win.addstr(9-i,1,output)
+        i = i + 1
+        output = "   "
+
+def printvdef(win,perc):
+    i = 0
+    output = format(xstr(int(perc * 100)),">3s")
+    barperc = int(9 * perc)
+    while i < 9:
+        if i < barperc:
+            win.addstr(9-i,1,output,curses.A_REVERSE)
+        else:
+            win.addstr(9-i,1,output)
+        i = i + 1
+        output = "   "
    
 def pdeg(inum):
     if isNum(inum):
@@ -514,7 +548,7 @@ def init_rpos_window(win,y,x):
     rwin.addstr(6,1,"R.TTPE ")
     rwin.addstr(7,1,"  R.VS ")
     rwin.addstr(8,1,"  R.HS ")
-    rwin.addstr(9,1,"R.SFCV ")
+    rwin.addstr(9,1,"R.SFCS ")
     rwin.refresh()
     return rwin
 
@@ -536,7 +570,7 @@ def draw_rpos_window(win,data):
     win.addstr(6,8,ptime(data["rttpe"]),curses.A_BOLD)
     win.addstr(7,8,pvel(data["rvs"]),curses.A_BOLD)
     win.addstr(8,8,pvel(data["rhs"]),curses.A_BOLD)
-    win.addstr(9,8,pvel(data["rsfcv"]),curses.A_BOLD)
+    win.addstr(9,8,pvel(data["rsfcs"]),curses.A_BOLD)
     win.refresh()
 
 def init_orbit_window(win,y,x):
@@ -578,7 +612,7 @@ def init_rorb_window(win,y,x):
     rowin.bkgd(curses.color_pair(1));
     win.refresh()
     rowin.addstr(0,1,"R.ORBIT",curses.A_BOLD)
-    rowin.addstr(1,1,"R.SMAG ")
+    rowin.addstr(1,1," R.SMA ")
     rowin.addstr(2,1,"  R.AP ")
     rowin.addstr(3,1,"  R.PE ")
     rowin.addstr(4,1," R.INC ")
@@ -606,16 +640,20 @@ def draw_rorb_window(win,data):
     win.refresh()
 
 def init_sfc_window(win,y,x):
-    sfcwin = curses.newwin(7,18,y,x)
+    sfcwin = curses.newwin(11,18,y,x)
     sfcwin.box()
     sfcwin.bkgd(curses.color_pair(1));
     win.refresh()
     sfcwin.addstr(0,1,"T.GND RADAR",curses.A_BOLD)
-    sfcwin.addstr(1,1," T.HAT ")
-    sfcwin.addstr(2,1," T.ASL ")
-    sfcwin.addstr(3,1,"  T.VS ")
-    sfcwin.addstr(4,1,"  T.HS ")
-    sfcwin.addstr(5,1,"T.SFCV ")
+    sfcwin.addstr(1,1,"STATUS ")
+    sfcwin.addstr(2,1," T.HAT ")
+    sfcwin.addstr(3,1," T.ASL ")
+    sfcwin.addstr(4,1,"  T.VS ")
+    sfcwin.addstr(5,1,"  T.HS ")
+    sfcwin.addstr(6,1,"T.SFVT ")
+    sfcwin.addstr(7,1,"T.SFVX ")
+    sfcwin.addstr(8,1,"T.SFVY ")
+    sfcwin.addstr(9,1,"T.SFVZ ")
     sfcwin.refresh()
     return sfcwin
 
@@ -625,12 +663,20 @@ def draw_sfc_window(win,data):
     win.addstr(3,8,"         ",curses.A_BOLD)
     win.addstr(4,8,"         ",curses.A_BOLD)
     win.addstr(5,8,"         ",curses.A_BOLD)
-    win.addstr(1,8,palt(data["hat"]),curses.A_BOLD)
-    win.addstr(2,8,palt(data["asl"]),curses.A_BOLD)
-    win.addstr(3,7,pvel(data["altt"]),curses.A_BOLD)
-    win.addstr(3,8,pvel(data["vs"]),curses.A_BOLD)
-    win.addstr(4,8,pvel(data["hs"]),curses.A_BOLD)
-    win.addstr(5,8,pvel(data["sfcv"]),curses.A_BOLD)
+    win.addstr(6,8,"         ",curses.A_BOLD)
+    win.addstr(7,8,"         ",curses.A_BOLD)
+    win.addstr(8,8,"         ",curses.A_BOLD)
+    win.addstr(9,8,"         ",curses.A_BOLD)
+    win.addstr(1,8,xstr(data["grstatus"]),curses.A_BOLD)
+    win.addstr(2,8,palt(data["hat"]),curses.A_BOLD)
+    win.addstr(3,8,palt(data["asl"]),curses.A_BOLD)
+    win.addstr(4,7,pvel(data["altt"]),curses.A_BOLD)
+    win.addstr(4,8,pvel(data["vs"]),curses.A_BOLD)
+    win.addstr(5,8,pvel(data["hs"]),curses.A_BOLD)
+    win.addstr(6,8,pvel(data["sfcv"]),curses.A_BOLD)
+    win.addstr(7,8,pvel(data["sfcvx"]),curses.A_BOLD)
+    win.addstr(8,8,pvel(data["sfcvy"]),curses.A_BOLD)
+    win.addstr(9,8,pvel(data["sfcvz"]),curses.A_BOLD)
     win.refresh()
 
 def init_lfuel_window(win,y,x):
@@ -684,6 +730,122 @@ def draw_mono_window(win,data):
     printhbar(win,monobar,monoperc)
     win.refresh()
 
+def init_pitch_window(win,y,x):
+    pitchwin = curses.newwin(11,4,y,x)
+    pitchwin.box()
+    pitchwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    pitchwin.addstr(1,0,"P",curses.A_BOLD)
+    pitchwin.addstr(2,0,"I",curses.A_BOLD)
+    pitchwin.addstr(3,0,"T",curses.A_BOLD)
+    pitchwin.refresh()
+    return pitchwin
+
+def draw_pitch_window(win,data):
+    win.addstr(1,1," ",curses.A_BOLD)
+    win.refresh()
+
+def init_yaw_window(win,y,x):
+    pitchwin = curses.newwin(11,4,y,x)
+    pitchwin.box()
+    pitchwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    pitchwin.addstr(1,0,"Y",curses.A_BOLD)
+    pitchwin.addstr(2,0,"A",curses.A_BOLD)
+    pitchwin.addstr(3,0,"W",curses.A_BOLD)
+    pitchwin.refresh()
+    return pitchwin
+
+def draw_yaw_window(win,data):
+    win.addstr(1,1," ",curses.A_BOLD)
+    win.refresh()
+
+def init_roll_window(win,y,x):
+    pitchwin = curses.newwin(11,4,y,x)
+    pitchwin.box()
+    pitchwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    pitchwin.addstr(1,0,"R",curses.A_BOLD)
+    pitchwin.addstr(2,0,"O",curses.A_BOLD)
+    pitchwin.addstr(3,0,"L",curses.A_BOLD)
+    pitchwin.refresh()
+    return pitchwin
+
+def draw_roll_window(win,data):
+    win.addstr(1,1," ",curses.A_BOLD)
+    win.refresh()
+
+def init_wr_window(win,y,x):
+    wrwin = curses.newwin(3,7,y,x)
+    wrwin.box()
+    wrwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    wrwin.addstr(1,1,"     ",curses.A_BOLD)
+    wrwin.refresh()
+    return wrwin
+
+def draw_wr_window(win,data):
+    if data["rstatus"] == "NOMINAL":
+        state = 0
+    else:
+        state = 1
+    printwarn(win,"RADAR",state)
+    win.refresh()
+
+def init_wt_window(win,y,x):
+    wtwin = curses.newwin(3,7,y,x)
+    wtwin.box()
+    wtwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    wtwin.addstr(1,1,"     ",curses.A_BOLD)
+    wtwin.refresh()
+    return wtwin
+
+def draw_wt_window(win,data):
+    if isNum(data["alt"]):
+        state = 0
+    else:
+        state = 1
+    printwarn(win,"TELEM",state)
+    win.refresh()
+
+def init_wg_window(win,y,x):
+    wgwin = curses.newwin(3,7,y,x)
+    wgwin.box()
+    wgwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    wgwin.addstr(1,1,"     ",curses.A_BOLD)
+    wgwin.refresh()
+    return wgwin
+
+def draw_wg_window(win,data):
+    if data["grstatus"] == "NOMINAL":
+        state = 0
+    else:
+        state = 1
+    printwarn(win,"G RAD",state)
+    win.refresh()
+
+def init_throt_window(win,y,x):
+    pitchwin = curses.newwin(11,5,y,x)
+    pitchwin.box()
+    pitchwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    pitchwin.addstr(1,0,"T",curses.A_BOLD)
+    pitchwin.addstr(2,0,"H",curses.A_BOLD)
+    pitchwin.addstr(3,0,"R",curses.A_BOLD)
+    pitchwin.addstr(4,0,"U",curses.A_BOLD)
+    pitchwin.addstr(5,0,"S",curses.A_BOLD)
+    pitchwin.addstr(6,0,"T",curses.A_BOLD)
+    pitchwin.addstr(9,4,"%",curses.A_BOLD)
+    pitchwin.refresh()
+    return pitchwin
+
+def draw_throt_window(win,data):
+    win.move(1,1)
+    printvbar(win,data["throt"])
+    win.refresh()
+
 def mainloop(win):
     timeposx = 1
     timeposy = 1
@@ -707,6 +869,20 @@ def mainloop(win):
     oxiy = 17
     monox = 1
     monoy = 20
+#    pitchx = 39
+#    pitchy = 12
+#    yawx = 44
+#    yawy = 12
+#    rollx = 49
+#    rolly = 12
+    wrx = 39
+    wry = 12
+    wtx = 46
+    wty = 12
+    wgx = 39
+    wgy = 15
+    throtx = 53
+    throty = 12
     win.nodelay(1)
     init_window(win)
     timewin = init_time_window(win,timeposy,timeposx)
@@ -720,6 +896,13 @@ def mainloop(win):
     lfuelwin = init_lfuel_window(win,fuely,fuelx)
     oxiwin = init_oxi_window(win,oxiy,oxix)
     monowin = init_mono_window(win,monoy,monox)
+#    pitchwin = init_pitch_window(win,pitchy,pitchx) not working
+#    yawwin = init_yaw_window(win,yawy,yawx)
+#    rollwin = init_roll_window(win,rolly,rollx)
+    wrwin = init_wr_window(win,wry,wrx)
+    wtwin = init_wt_window(win,wty,wtx)
+    wgwin = init_wg_window(win,wgy,wgx)
+    throtwin = init_throt_window(win,throty,throtx)
     while 1 is 1:
         data = fetchData()
         radar = getRadar(data)
@@ -736,6 +919,14 @@ def mainloop(win):
         draw_lfuel_window(lfuelwin,tele)
         draw_oxi_window(oxiwin,tele)
         draw_mono_window(monowin,tele)
+#        draw_pitch_window(pitchwin,tele) not working
+#        draw_yaw_window(yawwin,tele)
+#        draw_roll_window(rollwin,tele)
+        draw_wr_window(wrwin,tele)
+        draw_wt_window(wtwin,tele)
+        draw_wg_window(wgwin,tele)
+        draw_throt_window(throtwin,tele)
+        write_datetime(win)
         time.sleep(1)
 
 def startup():
