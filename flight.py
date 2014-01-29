@@ -361,7 +361,7 @@ def pltime(num):
     if isNum(num):
         m, s = divmod(num, 60)
         h, m = divmod(m, 60)
-        d, h = divmod(h, 24)
+        d, h = divmod(h, 6)
         d = xstr(int(d)).zfill(2)
         h = xstr(int(h)).zfill(2)
         m = xstr(int(m)).zfill(2)
