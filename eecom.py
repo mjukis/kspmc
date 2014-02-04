@@ -111,6 +111,43 @@ def getTelemetry(d):
             d["grstatus"] = "NOMINAL"
         return d
 
+def fuck(status,instring):
+    if status == 0 or status == 1:
+        return instring
+    if isNum(instring):
+        workstring = str(instring)
+    else:
+        workstring = instring
+    worklist = list(workstring)
+    if status == 2:
+        for i,char in enumerate(worklist):
+            charlist = [char,char,char,char,char,char,char,char,char,char,char,char,char,char,char,char,char,char,'!','?','i','$','/','|','#']
+            newchar = random.choice(charlist)
+            worklist[i] = newchar
+        outstring = "".join(worklist)
+    if status == 3 or status == 4:
+        for i,char in enumerate(worklist):
+            newchar = " "
+            worklist[i] = newchar
+        outstring = "".join(worklist)    
+    return outstring
+
+def fucknum(status,indata):
+    if status == 0 or status == 1:
+        return indata
+    if status == 2:
+        if isNum(indata):
+            if indata < 3:
+                outdata = random.uniform(-5,5)
+            else:
+                errnum = random.uniform(0.75,1.25)
+                outdata = indata * errnum
+        else:
+            return indata
+    if status == 3 or status == 4:
+        outdata = 0
+    return outdata
+
 def pnum(num):
     if isNum(num):
         nnum = xstr("{:,}".format(int(num)))
@@ -326,7 +363,7 @@ def draw_sys_window(win,data):
         win.addstr(1,5,"SAS",curses.A_REVERSE)
     if data["light"] == "True":
         win.addstr(1,9,"LGT",curses.A_REVERSE)
-    if isNum(data["alt"]):
+    if data["pstat"] == 0:
         win.addstr(1,13,"TEL",curses.A_REVERSE)
     else:
         win.addstr(1,1,"???|???|???")
@@ -396,6 +433,16 @@ def init_stor_window(win,y,x):
     return storwin
 
 def draw_stor_window(win,data):
+    pstat = data["pstat"]
+    lf = fuck(pstat,pfloat(data["lf"]))
+    oxidizer = fuck(pstat,pfloat(data["oxidizer"]))
+    mono = fuck(pstat,pfloat(data["mono"]))
+    o2 = fuck(pstat,pfloat(data["o2"]))
+    h2o = fuck(pstat,pfloat(data["h2o"]))
+    food = fuck(pstat,pfloat(data["food"]))
+    co2 = fuck(pstat,pfloat(data["co2"]))
+    waste = fuck(pstat,pfloat(data["waste"]))
+    wastewater = fuck(pstat,pfloat(data["wastewater"]))
     win.addstr(1,8,"         ",curses.A_BOLD)
     win.addstr(2,8,"         ",curses.A_BOLD)
     win.addstr(3,8,"         ",curses.A_BOLD)
@@ -405,15 +452,15 @@ def draw_stor_window(win,data):
     win.addstr(9,8,"         ",curses.A_BOLD)
     win.addstr(10,8,"         ",curses.A_BOLD)
     win.addstr(11,8,"         ",curses.A_BOLD)
-    win.addstr(1,8,pfloat(data["lf"]),curses.A_BOLD)
-    win.addstr(2,8,pfloat(data["oxidizer"]),curses.A_BOLD)
-    win.addstr(3,8,pfloat(data["mono"]),curses.A_BOLD)
-    win.addstr(5,8,pfloat(data["o2"]),curses.A_BOLD)
-    win.addstr(6,8,pfloat(data["h2o"]),curses.A_BOLD)
-    win.addstr(7,8,pfloat(data["food"]),curses.A_BOLD)
-    win.addstr(9,8,pfloat(data["co2"]),curses.A_BOLD)
-    win.addstr(10,8,pfloat(data["waste"]),curses.A_BOLD)
-    win.addstr(11,8,pfloat(data["wastewater"]),curses.A_BOLD)
+    win.addstr(1,8,lf,curses.A_BOLD)
+    win.addstr(2,8,oxidizer,curses.A_BOLD)
+    win.addstr(3,8,mono,curses.A_BOLD)
+    win.addstr(5,8,o2,curses.A_BOLD)
+    win.addstr(6,8,h2o,curses.A_BOLD)
+    win.addstr(7,8,food,curses.A_BOLD)
+    win.addstr(9,8,co2,curses.A_BOLD)
+    win.addstr(10,8,waste,curses.A_BOLD)
+    win.addstr(11,8,wastewater,curses.A_BOLD)
     win.refresh()
 
 def init_weight_window(win,y,x):
@@ -439,15 +486,16 @@ def init_weight_window(win,y,x):
     return wwin
 
 def draw_weight_window(win,data):
-    wlf = data["lf"] * 5
-    woxi = data["oxidizer"] * 5
-    wmono = data["mono"] * 4
-    wo2 = data["o2"] * 0.04290144
-    wh2o = data["h2o"] * 1.7977746
-    wfood = data["food"] * 0.3166535
-    wco2 = data["co2"] * 0.00561805
-    wwaste = data["waste"] * 0.00561805
-    wwh2o = data["wastewater"] * 1.9765307
+    pstat = data["pstat"]
+    wlf = fucknum(pstat,data["lf"] * 5)
+    woxi = fucknum(pstat,data["oxidizer"] * 5)
+    wmono = fucknum(pstat,data["mono"] * 4)
+    wo2 = fucknum(pstat,data["o2"] * 0.04290144)
+    wh2o = fucknum(pstat,data["h2o"] * 1.7977746)
+    wfood = fucknum(pstat,data["food"] * 0.3166535)
+    wco2 = fucknum(pstat,data["co2"] * 0.00561805)
+    wwaste = fucknum(pstat,data["waste"] * 0.00561805)
+    wwh2o = fucknum(pstat,data["wastewater"] * 1.9765307)
     wtot = wlf + woxi + wmono + wo2 + wh2o + wfood + wco2 + wwaste + wwh2o
     win.addstr(1,8,"         ",curses.A_BOLD)
     win.addstr(2,8,"         ",curses.A_BOLD)
@@ -459,7 +507,7 @@ def draw_weight_window(win,data):
     win.addstr(10,8,"         ",curses.A_BOLD)
     win.addstr(11,8,"         ",curses.A_BOLD)
     win.addstr(13,8,"         ",curses.A_BOLD)
-    win.addstr(1,8,pfloat(wtot),curses.A_BOLD)
+    win.addstr(1,8,str(wtot),curses.A_BOLD)
     win.addstr(3,8,pfloat(wlf),curses.A_BOLD)
     win.addstr(4,8,pfloat(woxi),curses.A_BOLD)
     win.addstr(5,8,pfloat(wmono),curses.A_BOLD)
@@ -481,9 +529,11 @@ def init_lfuel_window(win,y,x):
     return fuelwin
 
 def draw_lfuel_window(win,data):
+    pstat = data["pstat"]
+    lf = fucknum(pstat,data["lf"])
     win.addstr(1,1,"                    ",curses.A_BOLD)
-    fuelbar = phbar(data["lf"],data["mlf"])
-    fuelperc = data["lf"] / data["mlf"]
+    fuelbar = phbar(lf,data["mlf"])
+    fuelperc = lf / data["mlf"]
     win.move(1,1)
     printhbar(win,fuelbar,fuelperc)
     win.refresh()
@@ -499,8 +549,10 @@ def init_oxi_window(win,y,x):
 
 def draw_oxi_window(win,data):
     win.addstr(1,1,"                    ",curses.A_BOLD)
-    oxibar = phbar(data["oxidizer"],data["moxidizer"])
-    oxiperc = data["oxidizer"] / data["moxidizer"]
+    pstat = data["pstat"]
+    oxidizer = fucknum(pstat,data["oxidizer"])
+    oxibar = phbar(oxidizer,data["moxidizer"])
+    oxiperc = oxidizer / data["moxidizer"]
     win.move(1,1)
     printhbar(win,oxibar,oxiperc)    
     win.refresh()
@@ -516,8 +568,10 @@ def init_mono_window(win,y,x):
 
 def draw_mono_window(win,data):
     win.addstr(1,1,"                   ",curses.A_BOLD)
-    monobar = phbar(data["mono"],data["mmono"])
-    monoperc = data["mono"] / data["mmono"]
+    pstat = data["pstat"]
+    mono = fucknum(pstat,data["mono"])
+    monobar = phbar(mono,data["mmono"])
+    monoperc = mono / data["mmono"]
     win.move(1,1)
     printhbar(win,monobar,monoperc)
     win.refresh()
@@ -533,8 +587,10 @@ def init_elec_window(win,y,x):
 
 def draw_elec_window(win,data):
     win.addstr(1,1,"                   ",curses.A_BOLD)
-    elecbar = phbar(data["w"],data["mw"])
-    elecperc = data["w"] / data["mw"]
+    pstat = data["pstat"]
+    w = fucknum(pstat,data["w"])
+    elecbar = phbar(w,data["mw"])
+    elecperc = w / data["mw"]
     win.move(1,1)
     printhbar(win,elecbar,elecperc)
     win.refresh()
@@ -550,8 +606,10 @@ def init_o2_window(win,y,x):
 
 def draw_o2_window(win,data):
     win.addstr(1,1,"                   ",curses.A_BOLD)
-    o2bar = phbar(data["o2"],data["mo2"])
-    o2perc = data["o2"] / data["mo2"]
+    pstat = data["pstat"]
+    o2 = fucknum(pstat,data["o2"])
+    o2bar = phbar(o2,data["mo2"])
+    o2perc = o2 / data["mo2"]
     win.move(1,1)
     printhbar(win,o2bar,o2perc)
     win.refresh()
@@ -567,8 +625,10 @@ def init_h2o_window(win,y,x):
 
 def draw_h2o_window(win,data):
     win.addstr(1,1,"                   ",curses.A_BOLD)
-    h2obar = phbar(data["h2o"],data["mh2o"])
-    h2operc = data["h2o"] / data["mh2o"]
+    pstat = data["pstat"]
+    h2o = fucknum(pstat,data["h2o"])
+    h2obar = phbar(h2o,data["mh2o"])
+    h2operc = h2o / data["mh2o"]
     win.move(1,1)
     printhbar(win,h2obar,h2operc)
     win.refresh()

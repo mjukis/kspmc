@@ -215,7 +215,7 @@ def fuck(status,instring):
             newchar = random.choice(charlist)
             worklist[i] = newchar
         outstring = "".join(worklist)
-    if status == 3:
+    if status == 3 or status == 4:
         for i,char in enumerate(worklist):
             newchar = " "
             worklist[i] = newchar
@@ -231,7 +231,7 @@ def fucknum(status,indata):
             outdata = indata * errnum
         else:
             return indata
-    if status == 3:
+    if status == 3 or status == 4:
         outdata = 0
     return outdata
 
@@ -627,6 +627,19 @@ def init_sfc_window(win,y,x):
     return sfcwin
 
 def draw_sfc_window(win,data):
+    pstat = data["pstat"]
+    grstatus = fuck(pstat,xstr(data["grstatus"]))
+    hat = fuck(pstat,palt(data["hat"]))
+    asl = fuck(pstat,palt(data["asl"]))
+    altt = fuck(pstat,xstr(data["altt"]))
+    vs = fuck(pstat,pvel(data["vs"]))
+    hs = fuck(pstat,pvel(data["hs"]))
+    sfcv = fuck(pstat,pvel(data["sfcv"]))
+    sfcvx = fuck(pstat,pvel(data["sfcvx"]))
+    sfcvy = fuck(pstat,pvel(data["sfcvy"]))
+    sfcvz = fuck(pstat,pvel(data["sfcvz"]))
+    if isNum(vs) == False:
+        altt = " "
     win.addstr(1,8,"         ",curses.A_BOLD)
     win.addstr(2,8,"         ",curses.A_BOLD)
     win.addstr(3,8,"         ",curses.A_BOLD)
@@ -636,16 +649,16 @@ def draw_sfc_window(win,data):
     win.addstr(7,8,"         ",curses.A_BOLD)
     win.addstr(8,8,"         ",curses.A_BOLD)
     win.addstr(9,8,"         ",curses.A_BOLD)
-    win.addstr(1,8,xstr(data["grstatus"]),curses.A_BOLD)
-    win.addstr(2,8,palt(data["hat"]),curses.A_BOLD)
-    win.addstr(3,8,palt(data["asl"]),curses.A_BOLD)
-    win.addstr(4,7,pvel(data["altt"]),curses.A_BOLD)
-    win.addstr(4,8,pvel(data["vs"]),curses.A_BOLD)
-    win.addstr(5,8,pvel(data["hs"]),curses.A_BOLD)
-    win.addstr(6,8,pvel(data["sfcv"]),curses.A_BOLD)
-    win.addstr(7,8,pvel(data["sfcvx"]),curses.A_BOLD)
-    win.addstr(8,8,pvel(data["sfcvy"]),curses.A_BOLD)
-    win.addstr(9,8,pvel(data["sfcvz"]),curses.A_BOLD)
+    win.addstr(1,8,grstatus,curses.A_BOLD)
+    win.addstr(2,8,hat,curses.A_BOLD)
+    win.addstr(3,8,asl,curses.A_BOLD)
+    win.addstr(4,7,altt,curses.A_BOLD)
+    win.addstr(4,8,vs,curses.A_BOLD)
+    win.addstr(5,8,hs,curses.A_BOLD)
+    win.addstr(6,8,sfcv,curses.A_BOLD)
+    win.addstr(7,8,sfcvx,curses.A_BOLD)
+    win.addstr(8,8,sfcvy,curses.A_BOLD)
+    win.addstr(9,8,sfcvz,curses.A_BOLD)
     win.refresh()
 
 def init_lfuel_window(win,y,x):
