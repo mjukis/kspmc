@@ -21,8 +21,6 @@ import pika
 import marshal
 
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-global olddata
-olddata = {"alt":"0","pe":"0"}
 
 def xstr(s):
     if s is None:
@@ -78,63 +76,6 @@ def rAlt(num):
     else:
         return num
 
-def checkTelemetry(pstat):
-    if pstat == 0:
-        return True
-    else:
-        return False
-
-def badtele(olddata):
-    d = olddata
-#        d["throt"] = " "	#Throttle
-#        d["rcs"] = " "		#RCS status
-#        d["sas"] = " "		#SAS status
-#        d["light"] = " "	#Lights status
-#        d["pe"] = " "		#PE
-#        d["ap"] = " "		#AP
-#        d["ttap"] = " "		#Time to AP
-#        d["ttpe"] = " "		#Time to PE
-#        d["operiod"] = " "	#Orbital period
-#        d["sma"] = " "		#SMA
-    d["alt"] = "ERR!"		#Altitude
-#        d["hat"] = " "		#Height above terrain
-#        d["mt"] = " "		#Mission time
-#        d["ut"] = " "		#Universal time
-#        d["sfcv"] = " "		#SFC velocity
-#        d["ov"] = " "		#Orbital velocity
-#        d["vs"] = " "		#Vertical speed
-#        d["lat"] = " "		#Latitude
-#        d["long"] = " "		#Longitude
-#        d["body"] = " "		#Orbital body
-#        d["o2"] = " "		#Oxygen
-#        d["co2"] = " "		#Carbon dioxide
-#        d["h2o"] = " "		#Water
-#        d["w"] = " "		#Electric charge
-#        d["food"] = " "		#Food
-#        d["waste"] = " "	#Solid waste
-#        d["wastewater"] = " "	#Liquid waste
-#        d["mo2"] = " "		#Max oxygen
-#        d["mco2"] = " "		#Max carbon dioxide
-#        d["mh2o"] = " "		#Max water
-#        d["mw"] = " "		#Max electric charge
-#        d["mfood"] = " "	#Max food
-#        d["mwaste"] = " "	#Max solid waste
-#        d["mwastewater"] = " "	#Max liquid waste
-    d["pitch"] = " "	#Pitch degrees
-    d["roll"] = " "		#Roll degrees
-    d["hdg"] = " "		#Heading degrees
-#        d["pstat"] = "1"	#Telemetry status
-#        d["inc"] = " "		#Inclination
-#        d["ecc"] = " "		#Eccentricity
-#        d["aope"] = " "		#Argument of PE
-#        d["lan"] = " "		Longitude of AN
-#        d["lf"] = " "		#Liquid Fuel
-#        d["oxidizer"] = " "	#Oxidizer
-#        d["mlf"] = " "		#Max liquid fuel
-#        d["moxidizer"] = " "	#Max oxidizer
-    d["tstatus"] = 0
-    return d
-
 def getRadar(d):
     maxralt = 7000000 #max radar altitude
     minralt = 500 #min radar altitude
@@ -164,7 +105,6 @@ def getRadar(d):
     d["roperiod"] = d["operiod"]
     d["rov"] = d["ov"]
     d["rstatus"] = "NOMINAL"
-#    d["rstatus"] = d["tstatus"]
     if d["body"] != "Kerbin":
         d["ralt"] = "N/A"
         d["rpe"] = " "
@@ -229,8 +169,9 @@ def getTelemetry(d):
     maxgralt = "15000" #max altitude for ground radar
     if isNum(d["pe"]) and d["pe"] < 0:
         d["pe"] = 0
-    d["lat"] = rSlop(d["lat"])
-    d["long"] = rSlop(d["long"])
+    if d["pstat"] == 0:
+        d["lat"] = rSlop(d["lat"])
+        d["long"] = rSlop(d["long"])
     d["altt"] = "?"
     if isNum(d["vs"]):
         if d["vs"] < 0:
@@ -246,7 +187,7 @@ def getTelemetry(d):
             d["hs"] = " "
     d["asl"] = d["alt"]
     if isNum(d["asl"]):
-        if d["hat"] == -1 or d["hat"] > maxgralt:
+        if d["hat"] == -1 or d["hat"] > maxgralt or d["pstat"] != 0:
             d["grstatus"] = "UNAVAIL"
             d["hat"] = "MAX"
             d["asl"] = " "
@@ -258,18 +199,41 @@ def getTelemetry(d):
             d["sfcvz"] = " "
         else:
             d["grstatus"] = "NOMINAL"
-    if checkTelemetry(d["pstat"]):
         return d
+
+def fuck(status,instring):
+    if status == 0 or status == 1:
+        return instring
+    if isNum(instring):
+        workstring = str(instring)
     else:
-        d = badtele(olddata)
-#        d["alt"] = "ERR!"
-#        d["altt"] = "?"
-#        d["pitch"] = "0"
-#        d["roll"] = "0"
-#        d["hdg"] = "0"
-        d["grstatus"] = "UNAVAIL"
-        d["sma"] = "ERR!"
-        return d
+        workstring = instring
+    worklist = list(workstring)
+    if status == 2:
+        for i,char in enumerate(worklist):
+            charlist = [char,char,char,char,char,char,char,char,char,char,char,char,char,char,char,char,char,char,'!','?','i','$','/','|','#']
+            newchar = random.choice(charlist)
+            worklist[i] = newchar
+        outstring = "".join(worklist)
+    if status == 3:
+        for i,char in enumerate(worklist):
+            newchar = " "
+            worklist[i] = newchar
+        outstring = "".join(worklist)    
+    return outstring
+
+def fucknum(status,indata):
+    if status == 0 or status == 1:
+        return indata
+    if status == 2:
+        if isNum(indata):
+            errnum = random.uniform(0.75,1.25)
+            outdata = indata * errnum
+        else:
+            return indata
+    if status == 3:
+        outdata = 0
+    return outdata
 
 def pnum(num):
     if isNum(num):
@@ -288,7 +252,7 @@ def pvel(num):
 def phbar(num,mnum):
     if isNum(num) and isNum(mnum):
         pnum = int((num / mnum) * 100)
-        onum = xstr(" " + "{:,}".format(int(num))) + " (" + xstr(pnum) + "%)"
+        onum = xstr(" " + "{:,}".format(round(num,1))) + " (" + xstr(pnum) + "%)"
     else:
         onum = num
     return onum
@@ -361,7 +325,7 @@ def pltime(num):
     if isNum(num):
         m, s = divmod(num, 60)
         h, m = divmod(m, 60)
-        d, h = divmod(h, 24)
+        d, h = divmod(h, 6)
         d = xstr(int(d)).zfill(2)
         h = xstr(int(h)).zfill(2)
         m = xstr(int(m)).zfill(2)
@@ -465,7 +429,7 @@ def draw_sys_window(win,data):
         win.addstr(1,5,"SAS",curses.A_REVERSE)
     if data["light"] == "True":
         win.addstr(1,9,"LGT",curses.A_REVERSE)
-    if isNum(data["alt"]):
+    if data["pstat"] == 0:
         win.addstr(1,13,"TEL",curses.A_REVERSE)
     else:
         win.addstr(1,1,"???|???|???")
@@ -499,6 +463,17 @@ def init_tpos_window(win,y,x):
     return twin
 
 def draw_tpos_window(win,data):
+    pstat = data["pstat"]
+    body = pnum(data["body"])
+    altt = fuck(pstat,pnum(data["altt"]))
+    alt = fuck(pstat,palt(data["alt"]))
+    lat = fuck(pstat,plat(data["lat"]))
+    long = fuck(pstat,plong(data["long"]))
+    ttap = fuck(pstat,ptime(data["ttap"]))
+    ttpe = fuck(pstat,ptime(data["ttpe"]))
+    pitch = fuck(pstat,pdeg(data["pitch"]))
+    roll = fuck(pstat,pdeg(data["roll"]))
+    hdg = fuck(pstat,pdeg(data["hdg"]))
     win.addstr(1,8,"         ",curses.A_BOLD)
     win.addstr(2,8,"         ",curses.A_BOLD)
     win.addstr(3,8,"         ",curses.A_BOLD)
@@ -508,16 +483,16 @@ def draw_tpos_window(win,data):
     win.addstr(7,8,"         ",curses.A_BOLD)
     win.addstr(8,8,"         ",curses.A_BOLD)
     win.addstr(9,8,"         ",curses.A_BOLD)
-    win.addstr(1,8,pnum(data["body"]).upper(),curses.A_BOLD)
-    win.addstr(2,7,pnum(data["altt"]))
-    win.addstr(2,8,palt(data["alt"]),curses.A_BOLD)
-    win.addstr(3,8,plat(data["lat"]),curses.A_BOLD)
-    win.addstr(4,8,plong(data["long"]),curses.A_BOLD)
-    win.addstr(5,8,ptime(data["ttap"]),curses.A_BOLD)
-    win.addstr(6,8,ptime(data["ttpe"]),curses.A_BOLD)
-    win.addstr(7,8,pdeg(data["pitch"]),curses.A_BOLD)
-    win.addstr(8,8,pdeg(data["roll"]),curses.A_BOLD)
-    win.addstr(9,8,pdeg(data["hdg"]),curses.A_BOLD)
+    win.addstr(1,8,body.upper(),curses.A_BOLD)
+    win.addstr(2,7,altt)
+    win.addstr(2,8,alt,curses.A_BOLD)
+    win.addstr(3,8,lat,curses.A_BOLD)
+    win.addstr(4,8,long,curses.A_BOLD)
+    win.addstr(5,8,ttap,curses.A_BOLD)
+    win.addstr(6,8,ttpe,curses.A_BOLD)
+    win.addstr(7,8,pitch,curses.A_BOLD)
+    win.addstr(8,8,roll,curses.A_BOLD)
+    win.addstr(9,8,hdg,curses.A_BOLD)
     win.refresh()
 
 def init_rpos_window(win,y,x):
@@ -576,6 +551,14 @@ def init_orbit_window(win,y,x):
     return owin
 
 def draw_orbit_window(win,data):
+    pstat = data["pstat"]
+    sma = fuck(pstat,palt(data["sma"]))
+    ap = fuck(pstat,palt(data["ap"]))
+    pe = fuck(pstat,palt(data["pe"]))
+    inc = fuck(pstat,pdeg(data["inc"]))
+    lan = fuck(pstat,plong(data["lan"]))
+    operiod = fuck(pstat,ptime(data["operiod"]))
+    ov = fuck(pstat,pvel(data["ov"]))
     win.addstr(1,8,"         ",curses.A_BOLD)
     win.addstr(2,8,"         ",curses.A_BOLD)
     win.addstr(3,8,"         ",curses.A_BOLD)
@@ -583,13 +566,13 @@ def draw_orbit_window(win,data):
     win.addstr(5,8,"         ",curses.A_BOLD)
     win.addstr(6,8,"         ",curses.A_BOLD)
     win.addstr(7,8,"         ",curses.A_BOLD)
-    win.addstr(1,8,palt(data["sma"]),curses.A_BOLD)
-    win.addstr(2,8,palt(data["ap"]),curses.A_BOLD)
-    win.addstr(3,8,palt(data["pe"]),curses.A_BOLD)
-    win.addstr(4,8,pdeg(data["inc"]),curses.A_BOLD)
-    win.addstr(5,8,plong(data["lan"]),curses.A_BOLD)
-    win.addstr(6,8,ptime(data["operiod"]),curses.A_BOLD)
-    win.addstr(7,8,pvel(data["ov"]),curses.A_BOLD)
+    win.addstr(1,8,sma,curses.A_BOLD)
+    win.addstr(2,8,ap,curses.A_BOLD)
+    win.addstr(3,8,pe,curses.A_BOLD)
+    win.addstr(4,8,inc,curses.A_BOLD)
+    win.addstr(5,8,lan,curses.A_BOLD)
+    win.addstr(6,8,operiod,curses.A_BOLD)
+    win.addstr(7,8,ov,curses.A_BOLD)
     win.refresh()
 
 def init_rorb_window(win,y,x):
@@ -676,8 +659,10 @@ def init_lfuel_window(win,y,x):
 
 def draw_lfuel_window(win,data):
     win.addstr(1,1,"                    ",curses.A_BOLD)
-    fuelbar = phbar(data["lf"],data["mlf"])
-    fuelperc = data["lf"] / data["mlf"]
+    pstat = data["pstat"]
+    lf = fucknum(pstat,data["lf"])
+    fuelbar = phbar(lf,data["mlf"])
+    fuelperc = lf / data["mlf"]
     win.move(1,1)
     printhbar(win,fuelbar,fuelperc)
     win.refresh()
@@ -693,8 +678,10 @@ def init_oxi_window(win,y,x):
 
 def draw_oxi_window(win,data):
     win.addstr(1,1,"                    ",curses.A_BOLD)
-    oxibar = phbar(data["oxidizer"],data["moxidizer"])
-    oxiperc = data["oxidizer"] / data["moxidizer"]
+    pstat = data["pstat"]
+    oxidizer = fucknum(pstat,data["oxidizer"])
+    oxibar = phbar(oxidizer,data["moxidizer"])
+    oxiperc = oxidizer / data["moxidizer"]
     win.move(1,1)
     printhbar(win,oxibar,oxiperc)    
     win.refresh()
@@ -710,8 +697,10 @@ def init_mono_window(win,y,x):
 
 def draw_mono_window(win,data):
     win.addstr(1,1,"                   ",curses.A_BOLD)
-    monobar = phbar(data["mono"],data["mmono"])
-    monoperc = data["mono"] / data["mmono"]
+    pstat = data["pstat"]
+    mono = fucknum(pstat,data["mono"])
+    monobar = phbar(mono,data["mmono"])
+    monoperc = mono / data["mmono"]
     win.move(1,1)
     printhbar(win,monobar,monoperc)
     win.refresh()
@@ -788,7 +777,7 @@ def init_wt_window(win,y,x):
     return wtwin
 
 def draw_wt_window(win,data):
-    if isNum(data["alt"]):
+    if data["pstat"] == 0:
         state = 0
     else:
         state = 1
@@ -829,8 +818,43 @@ def init_throt_window(win,y,x):
 
 def draw_throt_window(win,data):
     win.move(1,1)
-    printvbar(win,data["throt"])
+    pstat = data["pstat"]
+    throt = fucknum(pstat,data["throt"])
+    printvbar(win,throt)
     win.refresh()
+
+def processData(indata):
+    if indata["pstat"] == 0:
+        outdata = indata
+    if indata["pstat"] == 1:
+        #paused, do stuff?
+        outdata = indata
+#        outdata["alt"] = "ERR!"
+    if indata["pstat"] == 1:
+        #out of power
+        outdata = indata
+        numerr = random.uniform(0.75,1.25)
+        outdata["alt"] = indata["alt"] * numerr
+        numerr = random.uniform(0.9,1.1)
+        outdata["pitch"] = indata["pitch"] * numerr
+        numerr = random.uniform(0.9,1.1)
+        outdata["roll"] = indata["roll"] * numerr
+        numerr = random.uniform(0.9,1.1)
+        outdata["hdg"] = indata["hdg"] * numerr
+        outdata["tstatus"] = 0
+        outdata["lf"] = indata["lf"] * numerr
+        outdata["tstatus"] = 0
+        outdata["oxidizer"] = indata["oxidizer"] * numerr
+        outdata["tstatus"] = 0
+    if indata["pstat"] == 3:
+        #no antenna
+        outdata = indata
+#               else:
+#                   ns = list(indata[key])
+#                   for (n,value) in ns.items():
+#                       error = random.uniform(0.9,1.1)
+#                       nc = chr(ord(value) * error)
+    return outdata
 
 def mainloop(win):
     timeposx = 1
@@ -855,12 +879,6 @@ def mainloop(win):
     oxiy = 17
     monox = 1
     monoy = 20
-#    pitchx = 39
-#    pitchy = 12
-#    yawx = 44
-#    yawy = 12
-#    rollx = 49
-#    rolly = 12
     wrx = 39
     wry = 12
     wtx = 46
@@ -869,8 +887,10 @@ def mainloop(win):
     wgy = 15
     throtx = 53
     throty = 12
+
     win.nodelay(1)
     init_window(win)
+
     timewin = init_time_window(win,timeposy,timeposx)
     utimewin = init_utime_window(win,utimeposy,utimeposx)
     syswin = init_sys_window(win,sysy,sysx)
@@ -882,24 +902,20 @@ def mainloop(win):
     lfuelwin = init_lfuel_window(win,fuely,fuelx)
     oxiwin = init_oxi_window(win,oxiy,oxix)
     monowin = init_mono_window(win,monoy,monox)
-#    pitchwin = init_pitch_window(win,pitchy,pitchx) not working
-#    yawwin = init_yaw_window(win,yawy,yawx)
-#    rollwin = init_roll_window(win,rolly,rollx)
     wrwin = init_wr_window(win,wry,wrx)
     wtwin = init_wt_window(win,wty,wtx)
     wgwin = init_wg_window(win,wgy,wgx)
     throtwin = init_throt_window(win,throty,throtx)
+
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
     channel = connection.channel()
-
     channel.exchange_declare(exchange='logs',type='fanout')
     channel.queue_bind(exchange='logs',queue='ksp_data')
 
     def callback(ch, method, properties, body):
-        write_datetime(win)
         indata = marshal.loads(body)
         data = dict(indata)
-#        data = fetchData()
+        write_datetime(win)
         radar = getRadar(data)
         tele = getTelemetry(data)
         write_datetime(win)
@@ -914,13 +930,11 @@ def mainloop(win):
         draw_lfuel_window(lfuelwin,tele)
         draw_oxi_window(oxiwin,tele)
         draw_mono_window(monowin,tele)
-#        draw_pitch_window(pitchwin,tele) not working
-#        draw_yaw_window(yawwin,tele)
-#        draw_roll_window(rollwin,tele)
         draw_wr_window(wrwin,tele)
         draw_wt_window(wtwin,tele)
         draw_wg_window(wgwin,tele)
         draw_throt_window(throtwin,tele)
+        write_datetime(win)
 
     channel.basic_consume(callback, queue="ksp_data", no_ack=True)
     channel.start_consuming()
