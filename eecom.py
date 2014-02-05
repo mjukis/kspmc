@@ -3,6 +3,7 @@
 #--------------------
 # KSP Telemachus
 # Mission Control
+# EECOM v0.95
 # By Erik N8MJK
 #--------------------
 
@@ -47,8 +48,8 @@ def write_datetime(win):
 
 def init_window(win):
     win.erase()
-    topstring = "EECOM"
-    bottomstring = "TELEMETRY"
+    topstring = "EECOM v0.95"
+    bottomstring = "ELECTRICAL, ENVIRONMENTAL AND COMSUMABLES TELEMETRY"
     bottomfillstring = (78- len(bottomstring)) * " "
     topfillstring  = (78 - len(topstring)) * " "
     win.addstr(0,0," " + topstring + topfillstring, curses.A_REVERSE)
@@ -182,6 +183,20 @@ def printwarn(win,warn,state):
         win.addstr(1,1,warn,curses.A_BOLD)
     else:
         win.addstr(1,1,warn,curses.A_BLINK + curses.A_REVERSE)
+
+def printbwarn(win,warn,state):
+    if state == 0:
+        win.addstr(1,7,"    ")
+        win.addstr(2,7,"    ")
+        win.addstr(3,1,warn,curses.A_BOLD)
+        win.addstr(4,7,"    ")
+        win.addstr(5,7,"    ")
+    else:
+        win.addstr(1,7,"    ",curses.A_BLINK + curses.A_REVERSE)
+        win.addstr(2,7,"    ",curses.A_BLINK + curses.A_REVERSE)
+        win.addstr(3,1,warn,curses.A_BLINK + curses.A_REVERSE)
+        win.addstr(4,7,"    ",curses.A_BLINK + curses.A_REVERSE)
+        win.addstr(5,7,"    ",curses.A_BLINK + curses.A_REVERSE)
 
 def printhbar(win,instr,perc):
     i = 0
@@ -369,12 +384,111 @@ def draw_sys_window(win,data):
         win.addstr(1,1,"???|???|???")
     win.refresh()
 
+def init_alarm_window(win,y,x):
+    alarmwin = curses.newwin(7,18,y,x)
+    alarmwin.box()
+    alarmwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    alarmwin.addstr(3,1,"            ",curses.A_BOLD)
+    alarmwin.refresh()
+    return alarmwin
+
+def draw_alarm_window(win,data):
+    lfp = data["lf"] / data["mlf"]
+    oxip = data["oxidizer"] / data["moxidizer"]
+    monop = data["mono"] / data["mmono"]
+    o2p = data["o2"] / data["mo2"]
+    h2op = data["h2o"] / data["mh2o"]
+    foodp = data["food"] / data["mfood"]
+    mp = data["w"] / data["mw"]
+    if o2p > 0.1 and h2op > 0.1 and foodp > 0.1:
+        lsstatus = 0
+    else:
+        lsstatus = 1
+    if lfp > 0.1 and oxip > 0.1 and monop > 0.1 and lsstatus == 0 and mp > 0.1:
+        state = 0
+    else:
+        state = 1
+    printbwarn(win,"  MASTER ALARM  ",state)
+    win.refresh()
+
+def init_wls_window(win,y,x):
+    wlswin = curses.newwin(3,7,y,x)
+    wlswin.box()
+    wlswin.bkgd(curses.color_pair(1));
+    win.refresh()
+    wlswin.addstr(1,1,"     ",curses.A_BOLD)
+    wlswin.refresh()
+    return wlswin
+
+def draw_wls_window(win,data):
+    o2p = data["o2"] / data["mo2"]
+    h2op = data["h2o"] / data["mh2o"]
+    foodp = data["food"] / data["mfood"]
+    if o2p > 0.1 and h2op > 0.1 and foodp > 0.1:
+        state = 0
+    else:
+        state = 1
+    printwarn(win,"LIF.S",state)
+    win.refresh()
+
+def init_wm_window(win,y,x):
+    wmwin = curses.newwin(3,7,y,x)
+    wmwin.box()
+    wmwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    wmwin.addstr(1,1,"     ",curses.A_BOLD)
+    wmwin.refresh()
+    return wmwin
+
+def draw_wm_window(win,data):
+    if data["mono"] / data["mmono"] > 0.1:
+        state = 0
+    else:
+        state = 1
+    printwarn(win," RCS ",state)
+    win.refresh()
+
+def init_wb_window(win,y,x):
+    wbwin = curses.newwin(3,7,y,x)
+    wbwin.box()
+    wbwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    wbwin.addstr(1,1,"     ",curses.A_BOLD)
+    wbwin.refresh()
+    return wbwin
+
+def draw_wb_window(win,data):
+    if data["w"] / data["mw"] > 0.1:
+        state = 0
+    else:
+        state = 1
+    printwarn(win," BAT ",state)
+    win.refresh()
+
+def init_wf_window(win,y,x):
+    wfwin = curses.newwin(3,7,y,x)
+    wfwin.box()
+    wfwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    wfwin.addstr(1,1,"     ",curses.A_BOLD)
+    wfwin.refresh()
+    return wfwin
+
+def draw_wf_window(win,data):
+    if data["lf"] / data["mlf"] > 0.1 and data["oxidizer"] / data["moxidizer"] > 0.1:
+        state = 0
+    else:
+        state = 1
+    printwarn(win,"LF/OX",state)
+    win.refresh()
+
 def init_batt_window(win,y,x):
     bwin = curses.newwin(5,18,y,x)
     bwin.box()
     bwin.bkgd(curses.color_pair(1));
     win.refresh()
-    bwin.addstr(0,1,"T.BATT",curses.A_BOLD)
+    bwin.addstr(0,1,"T.BATTERIES",curses.A_BOLD)
     bwin.addstr(1,1,"  MAIN ")
     bwin.addstr(2,1,"    CM ")
     bwin.addstr(3,1,"  RATE ")
@@ -409,7 +523,7 @@ def draw_batt_window(win,data):
     win.addstr(3,8,"         ",curses.A_BOLD)
     win.addstr(1,8,pfloat(battw),curses.A_BOLD)
     win.addstr(2,8,pfloat(cmw),curses.A_BOLD)
-    win.addstr(3,8,wr,curses.A_BOLD)
+    win.addstr(3,7,wr,curses.A_BOLD)
     win.refresh()
 
 def init_stor_window(win,y,x):
@@ -507,7 +621,7 @@ def draw_weight_window(win,data):
     win.addstr(10,8,"         ",curses.A_BOLD)
     win.addstr(11,8,"         ",curses.A_BOLD)
     win.addstr(13,8,"         ",curses.A_BOLD)
-    win.addstr(1,8,str(wtot),curses.A_BOLD)
+    win.addstr(1,8,pfloat(wtot),curses.A_BOLD)
     win.addstr(3,8,pfloat(wlf),curses.A_BOLD)
     win.addstr(4,8,pfloat(woxi),curses.A_BOLD)
     win.addstr(5,8,pfloat(wmono),curses.A_BOLD)
@@ -640,6 +754,16 @@ def mainloop(win):
     utimeposy = 1
     ctimeposx = 1
     ctimeposy = 3
+    alarmx = 58
+    alarmy = 1
+    wlsx = 58
+    wlsy = 1
+    wmx = 58
+    wmy = 5
+    wbx = 69
+    wby = 1
+    wfx = 69
+    wfy = 5
     battx = 39
     batty = 5
     storx = 39
@@ -668,6 +792,11 @@ def mainloop(win):
     utimewin = init_utime_window(win,utimeposy,utimeposx)
     ctimewin = init_ctime_window(win,ctimeposy,ctimeposx)
     syswin = init_sys_window(win,sysy,sysx)
+    alarmwin = init_alarm_window(win,alarmy,alarmx)
+    wmwin = init_wm_window(win,wmy,wmx)
+    wlswin = init_wls_window(win,wlsy,wlsx)
+    wbwin = init_wb_window(win,wby,wbx)
+    wfwin = init_wf_window(win,wfy,wfx)
     battwin = init_batt_window(win,batty,battx)
     storwin = init_stor_window(win,story,storx)
     wwin = init_weight_window(win,wy,wx)
@@ -693,6 +822,11 @@ def mainloop(win):
         draw_utime_window(utimewin,tele)
         draw_ctime_window(ctimewin,tele)
         draw_sys_window(syswin,tele)
+        draw_alarm_window(alarmwin,tele)
+        draw_wls_window(wlswin,tele)
+        draw_wm_window(wmwin,tele)
+        draw_wb_window(wbwin,tele)
+        draw_wf_window(wfwin,tele)
         draw_batt_window(battwin,tele)
         draw_stor_window(storwin,tele)
         draw_weight_window(wwin,tele)
