@@ -3,6 +3,7 @@
 #--------------------
 # KSP Telemachus
 # Mission Control
+# Flight Overview v0.80
 # By Erik N8MJK
 #--------------------
 
@@ -47,8 +48,8 @@ def write_datetime(win):
 
 def init_window(win):
     win.erase()
-    topstring = "FLIGHT DATA"
-    bottomstring = "TELEMETRY - RADAR"
+    topstring = "FLIGHT OVERVIEW v0.80"
+    bottomstring = "ORBITAL POSITION, RADAR AND BASIC FUEL TELEMETRY"
     bottomfillstring = (78- len(bottomstring)) * " "
     topfillstring  = (78 - len(topstring)) * " "
     win.addstr(0,0," " + topstring + topfillstring, curses.A_REVERSE)
@@ -814,6 +815,34 @@ def draw_wg_window(win,data):
     printwarn(win,"G RAD",state)
     win.refresh()
 
+def init_alarm_window(win,y,x):
+    wgwin = curses.newwin(3,7,y,x)
+    wgwin.box()
+    wgwin.bkgd(curses.color_pair(1));
+    win.refresh()
+    wgwin.addstr(1,1,"     ",curses.A_BOLD)
+    wgwin.refresh()
+    return wgwin
+
+def draw_alarm_window(win,data):
+    lfp = data["lf"] / data["mlf"]
+    oxip = data["oxidizer"] / data["moxidizer"]
+    monop = data["mono"] / data["mmono"]
+    o2p = data["o2"] / data["mo2"]
+    h2op = data["h2o"] / data["mh2o"]
+    foodp = data["food"] / data["mfood"]
+    mp = data["w"] / data["mw"]
+    if o2p > 0.1 and h2op > 0.1 and foodp > 0.1:
+        lsstatus = 0
+    else:
+        lsstatus = 1
+    if lfp > 0.1 and oxip > 0.1 and monop > 0.1 and lsstatus == 0 and mp > 0.1:
+        state = 0
+    else:
+        state = 1
+    printwarn(win,"ALARM",state)
+    win.refresh()
+
 def init_throt_window(win,y,x):
     pitchwin = curses.newwin(11,5,y,x)
     pitchwin.box()
@@ -892,11 +921,13 @@ def mainloop(win):
     oxiy = 17
     monox = 1
     monoy = 20
-    wrx = 39
+    alarmx = 39
+    alarmy = 12
+    wrx = 46
     wry = 12
-    wtx = 46
-    wty = 12
-    wgx = 39
+    wtx = 39
+    wty = 15
+    wgx = 46
     wgy = 15
     throtx = 53
     throty = 12
@@ -918,6 +949,7 @@ def mainloop(win):
     wrwin = init_wr_window(win,wry,wrx)
     wtwin = init_wt_window(win,wty,wtx)
     wgwin = init_wg_window(win,wgy,wgx)
+    alarmwin = init_alarm_window(win,alarmy,alarmx)
     throtwin = init_throt_window(win,throty,throtx)
 
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
@@ -946,6 +978,7 @@ def mainloop(win):
         draw_wr_window(wrwin,tele)
         draw_wt_window(wtwin,tele)
         draw_wg_window(wgwin,tele)
+        draw_alarm_window(alarmwin,tele)
         draw_throt_window(throtwin,tele)
         write_datetime(win)
 
