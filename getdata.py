@@ -18,8 +18,8 @@ import random
 import marshal
 
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+od = {"alt":0,"pitch":" ","yaw":" ","roll":" ","pstat":3}
 
-od = {"alt":"ERR!","pitch":" ","yaw":" ","roll":" ","tstatus":0}
 pw = 0
 lc = 0
 
@@ -35,15 +35,16 @@ def fetchData():
     try:
         u = urllib2.urlopen(url)
         d = json.load(u)
+        od = d
+        if d["w"] >= pw:
+            lc = d["mt"]
+        d["lc"] = lc
+        d["wr"] = d["w"] - pw
+        pw = d["w"]
         print "Got! :)"
     except:
         print "Didn't got :("
-
-    if d["w"] >= pw:
-        lc = d["mt"]
-    d["lc"] = lc
-    d["wr"] = d["w"] - pw
-    pw = d["w"]
+        d = od
     bytes = marshal.dumps(d)
     return bytes
 
@@ -58,7 +59,7 @@ def mainloop():
     while 1 is 1:
         data = fetchData()
         sendData(data)
-        time.sleep(0.5)
+        time.sleep(0.25)
 
 mainloop()
 
