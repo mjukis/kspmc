@@ -3,7 +3,7 @@
 #--------------------
 # KSP Telemachus
 # Mission Control
-# Flight Overview v0.80
+# Flight Overview v0.82
 # By Erik N8MJK
 #--------------------
 
@@ -385,32 +385,18 @@ def plong(inum):
         nnum = inum
     return nnum
 
-def init_time_window(win,y,x):
+def init_time_window(win,y,x,title):
     timewin = curses.newwin(2,14,y,x)
     timewin.box()
     timewin.bkgd(curses.color_pair(1));
     win.refresh()
-    timewin.addstr(0,1,"MISSION TIME",curses.A_BOLD)
+    timewin.addstr(0,1,title,curses.A_BOLD)
     timewin.refresh()
     return timewin
 
 def draw_time_window(win,data):
     win.addstr(1,1,"           ",curses.A_BOLD)
-    win.addstr(1,1,pltime(data["mt"]),curses.A_BOLD)
-    win.refresh()
-
-def init_utime_window(win,y,x):
-    utimewin = curses.newwin(2,14,y,x)
-    utimewin.box()
-    utimewin.bkgd(curses.color_pair(1));
-    win.refresh()        
-    utimewin.addstr(0,1,"UNIVRSL TIME",curses.A_BOLD)
-    utimewin.refresh()
-    return utimewin
-
-def draw_utime_window(win,data):
-    win.addstr(1,1,"           ",curses.A_BOLD)
-    win.addstr(1,1,pltime(data["ut"]),curses.A_BOLD)
+    win.addstr(1,1,pltime(data),curses.A_BOLD)
     win.refresh()
 
 def init_sys_window(win,y,x):
@@ -418,7 +404,7 @@ def init_sys_window(win,y,x):
     syswin.box()
     syswin.bkgd(curses.color_pair(1));
     win.refresh()
-    syswin.addstr(0,1,"SYSYEMS",curses.A_BOLD)
+    syswin.addstr(0,1,"SYSTEMS",curses.A_BOLD)
     syswin.refresh()
     return syswin
 
@@ -662,106 +648,23 @@ def draw_sfc_window(win,data):
     win.addstr(9,8,sfcvz,curses.A_BOLD)
     win.refresh()
 
-def init_lfuel_window(win,y,x):
+def init_hbar_window(win,y,x,title):
     fuelwin = curses.newwin(3,37,y,x)
     fuelwin.box()
     fuelwin.bkgd(curses.color_pair(1));
     win.refresh()
-    fuelwin.addstr(0,1,"T.LIQUIDFUEL",curses.A_BOLD)
+    fuelwin.addstr(0,1,title,curses.A_BOLD)
     fuelwin.refresh()
     return fuelwin
 
-def draw_lfuel_window(win,data):
+def draw_hbar_window(win,data,key,mkey):
     win.addstr(1,1,"                    ",curses.A_BOLD)
     pstat = data["pstat"]
-    lf = fucknum(pstat,data["lf"])
-    fuelbar = phbar(lf,data["mlf"])
-    fuelperc = lf / data["mlf"]
+    lf = fucknum(pstat,data[key])
+    fuelbar = phbar(lf,data[mkey])
+    fuelperc = lf / data[mkey]
     win.move(1,1)
     printhbar(win,fuelbar,fuelperc)
-    win.refresh()
-
-def init_oxi_window(win,y,x):
-    oxiwin = curses.newwin(3,37,y,x)
-    oxiwin.box()
-    oxiwin.bkgd(curses.color_pair(1));
-    win.refresh()
-    oxiwin.addstr(0,1,"T.OXIDIZER",curses.A_BOLD)
-    oxiwin.refresh()
-    return oxiwin
-
-def draw_oxi_window(win,data):
-    win.addstr(1,1,"                    ",curses.A_BOLD)
-    pstat = data["pstat"]
-    oxidizer = fucknum(pstat,data["oxidizer"])
-    oxibar = phbar(oxidizer,data["moxidizer"])
-    oxiperc = oxidizer / data["moxidizer"]
-    win.move(1,1)
-    printhbar(win,oxibar,oxiperc)    
-    win.refresh()
-
-def init_mono_window(win,y,x):
-    monowin = curses.newwin(3,37,y,x)
-    monowin.box()
-    monowin.bkgd(curses.color_pair(1));
-    win.refresh()
-    monowin.addstr(0,1,"T.MONOPROP",curses.A_BOLD)
-    monowin.refresh()
-    return monowin
-
-def draw_mono_window(win,data):
-    win.addstr(1,1,"                   ",curses.A_BOLD)
-    pstat = data["pstat"]
-    mono = fucknum(pstat,data["mono"])
-    monobar = phbar(mono,data["mmono"])
-    monoperc = mono / data["mmono"]
-    win.move(1,1)
-    printhbar(win,monobar,monoperc)
-    win.refresh()
-
-def init_pitch_window(win,y,x):
-    pitchwin = curses.newwin(11,4,y,x)
-    pitchwin.box()
-    pitchwin.bkgd(curses.color_pair(1));
-    win.refresh()
-    pitchwin.addstr(1,0,"P",curses.A_BOLD)
-    pitchwin.addstr(2,0,"I",curses.A_BOLD)
-    pitchwin.addstr(3,0,"T",curses.A_BOLD)
-    pitchwin.refresh()
-    return pitchwin
-
-def draw_pitch_window(win,data):
-    win.addstr(1,1," ",curses.A_BOLD)
-    win.refresh()
-
-def init_yaw_window(win,y,x):
-    pitchwin = curses.newwin(11,4,y,x)
-    pitchwin.box()
-    pitchwin.bkgd(curses.color_pair(1));
-    win.refresh()
-    pitchwin.addstr(1,0,"Y",curses.A_BOLD)
-    pitchwin.addstr(2,0,"A",curses.A_BOLD)
-    pitchwin.addstr(3,0,"W",curses.A_BOLD)
-    pitchwin.refresh()
-    return pitchwin
-
-def draw_yaw_window(win,data):
-    win.addstr(1,1," ",curses.A_BOLD)
-    win.refresh()
-
-def init_roll_window(win,y,x):
-    pitchwin = curses.newwin(11,4,y,x)
-    pitchwin.box()
-    pitchwin.bkgd(curses.color_pair(1));
-    win.refresh()
-    pitchwin.addstr(1,0,"R",curses.A_BOLD)
-    pitchwin.addstr(2,0,"O",curses.A_BOLD)
-    pitchwin.addstr(3,0,"L",curses.A_BOLD)
-    pitchwin.refresh()
-    return pitchwin
-
-def draw_roll_window(win,data):
-    win.addstr(1,1," ",curses.A_BOLD)
     win.refresh()
 
 def init_wr_window(win,y,x):
@@ -935,17 +838,17 @@ def mainloop(win):
     win.nodelay(1)
     init_window(win)
 
-    timewin = init_time_window(win,timeposy,timeposx)
-    utimewin = init_utime_window(win,utimeposy,utimeposx)
+    timewin = init_time_window(win,timeposy,timeposx,"MISSION TIME")
+    utimewin = init_time_window(win,utimeposy,utimeposx,"UNIVRSL TIME")
     syswin = init_sys_window(win,sysy,sysx)
     twin = init_tpos_window(win,tposy,tposx)
     rwin = init_rpos_window(win,rposy,rposx)
     rowin = init_rorb_window(win,roposy,roposx)
     owin = init_orbit_window(win,oposy,oposx)
     sfcwin = init_sfc_window(win,sfcy,sfcx)
-    lfuelwin = init_lfuel_window(win,fuely,fuelx)
-    oxiwin = init_oxi_window(win,oxiy,oxix)
-    monowin = init_mono_window(win,monoy,monox)
+    lfuelwin = init_hbar_window(win,fuely,fuelx,"T.LIQUID FUEL")
+    oxiwin = init_hbar_window(win,oxiy,oxix,"T.OXIDIZER")
+    monowin = init_hbar_window(win,monoy,monox,"T.MONOPROPELLANT")
     wrwin = init_wr_window(win,wry,wrx)
     wtwin = init_wt_window(win,wty,wtx)
     wgwin = init_wg_window(win,wgy,wgx)
@@ -964,17 +867,17 @@ def mainloop(win):
         radar = getRadar(data)
         tele = getTelemetry(data)
         write_datetime(win)
-        draw_time_window(timewin,tele)
-        draw_utime_window(utimewin,tele)
+        draw_time_window(timewin,tele["mt"])
+        draw_time_window(utimewin,tele["ut"])
         draw_sys_window(syswin,tele)
         draw_tpos_window(twin,tele)
         draw_rpos_window(rwin,radar)
         draw_rorb_window(rowin,radar)
         draw_orbit_window(owin,tele)
         draw_sfc_window(sfcwin,tele)
-        draw_lfuel_window(lfuelwin,tele)
-        draw_oxi_window(oxiwin,tele)
-        draw_mono_window(monowin,tele)
+        draw_hbar_window(lfuelwin,tele,"lf","mlf")
+        draw_hbar_window(oxiwin,tele,"oxidizer","moxidizer")
+        draw_hbar_window(monowin,tele,"mono","mmono")
         draw_wr_window(wrwin,tele)
         draw_wt_window(wtwin,tele)
         draw_wg_window(wgwin,tele)
