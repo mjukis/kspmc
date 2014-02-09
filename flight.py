@@ -20,62 +20,18 @@ import json
 import random
 import pika
 import marshal
+from kspmc import *
 
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
-def xstr(s):
-    if s is None:
-        return ''
-    return str(s)
-
-def get_datetime():
-    #let's make a pretty datetime
-    global timeoutput
-    global dateoutput
-    t = datetime.datetime.now()
-    currdatetime = t.timetuple()
-    dateoutput = time.strftime("%Y-%m-%d",currdatetime)
-    timeoutput = time.strftime("%d %b %Y %H:%M:%S",currdatetime)
-
-def write_datetime(win):
-    #separate function since this gets done A LOT
-    get_datetime()
-
-    win.move(0,59)
-    win.clrtoeol()
-    win.addstr(timeoutput, curses.A_REVERSE)
-    win.refresh()
-
 def init_window(win):
     win.erase()
-    topstring = "FLIGHT OVERVIEW v0.80"
+    topstring = "FLIGHT OVERVIEW v0.82"
     bottomstring = "ORBITAL POSITION, RADAR AND BASIC FUEL TELEMETRY"
     bottomfillstring = (78- len(bottomstring)) * " "
     topfillstring  = (78 - len(topstring)) * " "
     win.addstr(0,0," " + topstring + topfillstring, curses.A_REVERSE)
     win.addstr(23,0,bottomfillstring + bottomstring + " ", curses.A_REVERSE)
-
-def isNum(num):
-    try:
-        float(num)
-        return True
-    except ValueError:
-        pass
-    return False
-
-def rSlop(num):
-    if isNum(num):
-        nnum = num * random.uniform(0.99,1.01)
-        return nnum
-    else:
-        return num
-
-def rAlt(num):
-    if isNum(num):
-        nnum = round(int(num),-2)
-        return nnum
-    else:
-        return num
 
 def getRadar(d):
     maxralt = 7000000 #max radar altitude
@@ -166,225 +122,6 @@ def getRadar(d):
             d["ralt"] = round(d["ralt"], -2)
     return d
 
-def getTelemetry(d):
-    maxgralt = "15000" #max altitude for ground radar
-    if isNum(d["pe"]) and d["pe"] < 0:
-        d["pe"] = 0
-    if d["pstat"] == 0:
-        d["lat"] = rSlop(d["lat"])
-        d["long"] = rSlop(d["long"])
-    d["altt"] = "?"
-    if isNum(d["vs"]):
-        if d["vs"] < 0:
-            d["altt"] = "-"
-        else:
-            d["altt"] = "+"
-        if int(d["vs"]) == 0:
-            d["altt"] = " "
-        if isNum(d["vs"]):
-            d["hs"] = d["sfcs"] - abs(d["vs"])
-            d["vs"] = abs(d["vs"])
-        else:
-            d["hs"] = " "
-    d["asl"] = d["alt"]
-    if isNum(d["asl"]):
-        if d["hat"] == -1 or d["hat"] > maxgralt or d["pstat"] != 0:
-            d["grstatus"] = "UNAVAIL"
-            d["hat"] = "MAX"
-            d["asl"] = " "
-            d["vs"] = " "
-            d["hs"] = " "
-            d["sfcv"] = " "
-            d["sfcvx"] = " "
-            d["sfcvy"] = " "
-            d["sfcvz"] = " "
-        else:
-            d["grstatus"] = "NOMINAL"
-        return d
-
-def fuck(status,instring):
-    if status == 0 or status == 1:
-        return instring
-    if isNum(instring):
-        workstring = str(instring)
-    else:
-        workstring = instring
-    worklist = list(workstring)
-    if status == 2:
-        for i,char in enumerate(worklist):
-            charlist = [char,char,char,char,char,char,char,char,char,char,char,char,char,char,char,char,char,char,'!','?','i','$','/','|','#']
-            newchar = random.choice(charlist)
-            worklist[i] = newchar
-        outstring = "".join(worklist)
-    if status == 3 or status == 4:
-        for i,char in enumerate(worklist):
-            newchar = " "
-            worklist[i] = newchar
-        outstring = "".join(worklist)    
-    return outstring
-
-def fucknum(status,indata):
-    if status == 0 or status == 1:
-        return indata
-    if status == 2:
-        if isNum(indata):
-            errnum = random.uniform(0.75,1.25)
-            outdata = indata * errnum
-        else:
-            return indata
-    if status == 3 or status == 4:
-        outdata = 0
-    return outdata
-
-def pnum(num):
-    if isNum(num):
-        nnum = xstr("{:,}".format(int(num)))
-    else:
-        nnum = num
-    return nnum
-
-def pvel(num):
-    if isNum(num):
-        nnum = xstr("{:,}".format(int(num))) + "m/s"
-    else:
-        nnum = num
-    return nnum
-
-def phbar(num,mnum):
-    if isNum(num) and isNum(mnum):
-        pnum = int((num / mnum) * 100)
-        onum = xstr(" " + "{:,}".format(round(num,1))) + " (" + xstr(pnum) + "%)"
-    else:
-        onum = num
-    return onum
-
-def printwarn(win,warn,state):
-    if state == 0:
-        win.addstr(1,1,warn,curses.A_BOLD)
-    else:
-        win.addstr(1,1,warn,curses.A_BLINK + curses.A_REVERSE)
-
-def printhbar(win,instr,perc):
-    i = 0
-    barperc = int(35 * perc)
-    barstring = instr.ljust(35)
-    while i < 35:
-        if i < barperc:
-            win.addstr(barstring[i],curses.A_REVERSE)
-        else:
-            win.addstr(barstring[i])
-        i = i + 1
-
-def printvbar(win,perc):
-    i = 0
-    output = format(xstr(int(perc * 100)),">3s")
-    barperc = int(9 * perc)
-    while i < 9:
-        if i < barperc:
-            win.addstr(9-i,1,output,curses.A_REVERSE)
-        else:
-            win.addstr(9-i,1,output)
-        i = i + 1
-        output = "   "
-
-def printvdef(win,perc):
-    i = 0
-    output = format(xstr(int(perc * 100)),">3s")
-    barperc = int(9 * perc)
-    while i < 9:
-        if i < barperc:
-            win.addstr(9-i,1,output,curses.A_REVERSE)
-        else:
-            win.addstr(9-i,1,output)
-        i = i + 1
-        output = "   "
-   
-def pdeg(inum):
-    if isNum(inum):
-        num = xstr(abs(int(inum))).zfill(3)
-        if inum < 0:
-            nnum = "-%s" % num
-        else:
-            nnum = "+%s" % num
-    else:
-        nnum = inum
-    return nnum
-
-def ptime(num):
-    if isNum(num):
-        m, s = divmod(num, 60)
-        h, m = divmod(m, 60)
-        h = str(int(h)).zfill(2)
-        m = str(int(m)).zfill(2)
-        s = str(int(s)).zfill(2)
-        nnum = "%s:%s:%s" % (h,m,s)
-    else:
-        nnum = num
-    return nnum
-
-def pltime(num):
-    if isNum(num):
-        m, s = divmod(num, 60)
-        h, m = divmod(m, 60)
-        d, h = divmod(h, 6)
-        d = xstr(int(d)).zfill(2)
-        h = xstr(int(h)).zfill(2)
-        m = xstr(int(m)).zfill(2)
-        s = xstr(int(s)).zfill(2)
-        nnum = "%sd %s:%s:%s" % (d,h,m,s)
-    else:
-        nnum = num
-    return nnum
-
-def palt(num):
-    kmlimit = 100000
-    mmlimit = 999999000
-    if isNum(num):
-        if num < kmlimit:
-            nnum = xstr("{:,}".format(int(num))) + "m"
-        if num >= kmlimit:
-            nnum = xstr("{:,}".format(int(num / 1000))) + "km"
-        if num >= mmlimit:
-            nnum = xstr("{:,}".format(int(num / 1000000))) + "Mm"
-    else:
-        nnum = num
-    return nnum
-
-def plat(inum):
-    if isNum(inum):
-        num = abs(inum)
-        latmin = num - int(num)
-        latdeg = num - latmin
-        latmin = latmin * 60
-        min = xstr(int(latmin)).zfill(2) + "'"
-        deg = xstr(int(latdeg)).zfill(3) + " "
-        if num < 0:
-            nnum = deg + min + "S"
-        else:
-            nnum = deg + min + "N"
-    else:
-        nnum = inum
-    return nnum
-
-def plong(inum):
-    if isNum(inum):
-        if inum > 180:
-            num = inum - 360
-        else:
-            num = inum
-        longmin = abs(num - int(num))
-        longdeg = abs(num - longmin)
-        longmin = longmin * 60
-        min = xstr(int(longmin)).zfill(2) + "'"
-        deg = xstr(int(longdeg)).zfill(3) + " "
-        if num < 0:
-            nnum = deg + min + "W"
-        else:
-            nnum = deg + min + "E"
-    else:
-        nnum = inum
-    return nnum
-
 def init_time_window(win,y,x,title):
     timewin = curses.newwin(2,14,y,x)
     timewin.box()
@@ -397,6 +134,20 @@ def init_time_window(win,y,x,title):
 def draw_time_window(win,data):
     win.addstr(1,1,"           ",curses.A_BOLD)
     win.addstr(1,1,pltime(data),curses.A_BOLD)
+    win.refresh()
+
+def init_date_window(win,y,x,title):
+    datewin = curses.newwin(2,10,y,x)
+    datewin.box()
+    datewin.bkgd(curses.color_pair(1));
+    win.refresh()
+    datewin.addstr(0,1,title,curses.A_BOLD)
+    datewin.refresh()
+    return datewin
+
+def draw_date_window(win,data):
+    win.addstr(1,1,"        ",curses.A_BOLD)
+    win.addstr(1,1,pdate(data),curses.A_BOLD)
     win.refresh()
 
 def init_sys_window(win,y,x):
@@ -814,7 +565,11 @@ def mainloop(win):
     rposy = 3
     oposx = 39
     oposy = 3
-    sysx = 31
+    datex = 31
+    datey = 1
+    udatex = 42
+    udatey = 1
+    sysx = 55
     sysy = 1
     sfcx =58
     sfcy = 12
@@ -840,6 +595,8 @@ def mainloop(win):
 
     timewin = init_time_window(win,timeposy,timeposx,"MISSION TIME")
     utimewin = init_time_window(win,utimeposy,utimeposx,"UNIVRSL TIME")
+    datewin = init_date_window(win,datey,datex,"M DATE")
+    udatewin = init_date_window(win,udatey,udatex,"U DATE")
     syswin = init_sys_window(win,sysy,sysx)
     twin = init_tpos_window(win,tposy,tposx)
     rwin = init_rpos_window(win,rposy,rposx)
@@ -869,6 +626,8 @@ def mainloop(win):
         write_datetime(win)
         draw_time_window(timewin,tele["mt"])
         draw_time_window(utimewin,tele["ut"])
+        draw_date_window(datewin,tele["mt"])
+        draw_date_window(udatewin,tele["ut"])
         draw_sys_window(syswin,tele)
         draw_tpos_window(twin,tele)
         draw_rpos_window(rwin,radar)
