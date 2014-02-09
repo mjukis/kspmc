@@ -1,11 +1,11 @@
 #! /usr/bin/python
 # coding=UTF-8
-#--------------------
+#----------------------
 # KSP Telemachus
 # Mission Control
-# Flight Overview v0.82
+# Flight Overview v0.90
 # By Erik N8MJK
-#--------------------
+#----------------------
 
 import time
 import datetime
@@ -26,7 +26,7 @@ locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 def init_window(win):
     win.erase()
-    topstring = "FLIGHT OVERVIEW v0.82"
+    topstring = "FLIGHT OVERVIEW v0.90"
     bottomstring = "ORBITAL POSITION, RADAR AND BASIC FUEL TELEMETRY"
     bottomfillstring = (78- len(bottomstring)) * " "
     topfillstring  = (78 - len(topstring)) * " "
@@ -121,34 +121,6 @@ def getRadar(d):
         else:
             d["ralt"] = round(d["ralt"], -2)
     return d
-
-def init_time_window(win,y,x,title):
-    timewin = curses.newwin(2,14,y,x)
-    timewin.box()
-    timewin.bkgd(curses.color_pair(1));
-    win.refresh()
-    timewin.addstr(0,1,title,curses.A_BOLD)
-    timewin.refresh()
-    return timewin
-
-def draw_time_window(win,data):
-    win.addstr(1,1,"           ",curses.A_BOLD)
-    win.addstr(1,1,pltime(data),curses.A_BOLD)
-    win.refresh()
-
-def init_date_window(win,y,x,title):
-    datewin = curses.newwin(2,10,y,x)
-    datewin.box()
-    datewin.bkgd(curses.color_pair(1));
-    win.refresh()
-    datewin.addstr(0,1,title,curses.A_BOLD)
-    datewin.refresh()
-    return datewin
-
-def draw_date_window(win,data):
-    win.addstr(1,1,"        ",curses.A_BOLD)
-    win.addstr(1,1,pdate(data),curses.A_BOLD)
-    win.refresh()
 
 def init_sys_window(win,y,x):
     syswin = curses.newwin(2,21,y,x)
@@ -399,25 +371,6 @@ def draw_sfc_window(win,data):
     win.addstr(9,8,sfcvz,curses.A_BOLD)
     win.refresh()
 
-def init_hbar_window(win,y,x,title):
-    fuelwin = curses.newwin(3,37,y,x)
-    fuelwin.box()
-    fuelwin.bkgd(curses.color_pair(1));
-    win.refresh()
-    fuelwin.addstr(0,1,title,curses.A_BOLD)
-    fuelwin.refresh()
-    return fuelwin
-
-def draw_hbar_window(win,data,key,mkey):
-    win.addstr(1,1,"                    ",curses.A_BOLD)
-    pstat = data["pstat"]
-    lf = fucknum(pstat,data[key])
-    fuelbar = phbar(lf,data[mkey])
-    fuelperc = lf / data[mkey]
-    win.move(1,1)
-    printhbar(win,fuelbar,fuelperc)
-    win.refresh()
-
 def init_wr_window(win,y,x):
     wrwin = curses.newwin(3,7,y,x)
     wrwin.box()
@@ -467,56 +420,6 @@ def draw_wg_window(win,data):
     else:
         state = 1
     printwarn(win,"G RAD",state)
-    win.refresh()
-
-def init_alarm_window(win,y,x):
-    wgwin = curses.newwin(3,7,y,x)
-    wgwin.box()
-    wgwin.bkgd(curses.color_pair(1));
-    win.refresh()
-    wgwin.addstr(1,1,"     ",curses.A_BOLD)
-    wgwin.refresh()
-    return wgwin
-
-def draw_alarm_window(win,data):
-    lfp = data["lf"] / data["mlf"]
-    oxip = data["oxidizer"] / data["moxidizer"]
-    monop = data["mono"] / data["mmono"]
-    o2p = data["o2"] / data["mo2"]
-    h2op = data["h2o"] / data["mh2o"]
-    foodp = data["food"] / data["mfood"]
-    mp = data["w"] / data["mw"]
-    if o2p > 0.1 and h2op > 0.1 and foodp > 0.1:
-        lsstatus = 0
-    else:
-        lsstatus = 1
-    if lfp > 0.1 and oxip > 0.1 and monop > 0.1 and lsstatus == 0 and mp > 0.1:
-        state = 0
-    else:
-        state = 1
-    printwarn(win,"ALARM",state)
-    win.refresh()
-
-def init_throt_window(win,y,x):
-    pitchwin = curses.newwin(11,5,y,x)
-    pitchwin.box()
-    pitchwin.bkgd(curses.color_pair(1));
-    win.refresh()
-    pitchwin.addstr(1,0,"T",curses.A_BOLD)
-    pitchwin.addstr(2,0,"H",curses.A_BOLD)
-    pitchwin.addstr(3,0,"R",curses.A_BOLD)
-    pitchwin.addstr(4,0,"U",curses.A_BOLD)
-    pitchwin.addstr(5,0,"S",curses.A_BOLD)
-    pitchwin.addstr(6,0,"T",curses.A_BOLD)
-    pitchwin.addstr(9,4,"%",curses.A_BOLD)
-    pitchwin.refresh()
-    return pitchwin
-
-def draw_throt_window(win,data):
-    win.move(1,1)
-    pstat = data["pstat"]
-    throt = fucknum(pstat,data["throt"])
-    printvbar(win,throt)
     win.refresh()
 
 def processData(indata):
