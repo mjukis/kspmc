@@ -287,16 +287,18 @@ def pltime(num):
 def palt(num):
     #makes a sensible string out of an altitude in meters
     kmlimit = 100000
-    mmlimit = 9999999
+    mmlimit = 1000000
     if isNum(num):
-        if num < kmlimit:
+        if abs(num) < kmlimit:
             nnum = xstr("{:,}".format(int(num))) + "m"
-        if num >= kmlimit:
+        if abs(num) >= kmlimit:
             nnum = xstr("{:,}".format(round(num / 1000,1))) + "km"
-        if num >= kmlimit * 10:
+        if abs(num) >= kmlimit * 10:
             nnum = xstr("{:,}".format(int(round(num / 1000,0)))) + "km"
-        if num >= mmlimit:
-            nnum = xstr("{:,}".format(round(num / 1000000,1))) + "Mm"
+        if abs(num) >= mmlimit:
+            nnum = xstr("{:,}".format(round(num / 1000000,2))) + "Mm"
+        if abs(num) >= mmlimit * 10000:
+            nnum = xstr("{:,}".format(int(round(num / 1000000,0)))) + "Mm"
     else:
         nnum = num
     return nnum
