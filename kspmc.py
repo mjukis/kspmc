@@ -67,14 +67,14 @@ def rAlt(num):
 def getTelemetry(d):
     #prepares main data list for use as telemetry and returns it
     maxgralt = "15000" #max altitude for ground radar
-    if d["ttt1"] > 0:
-        d["t1"] = d["mt"] + d["ttt1"]
-    else:
-        d["t1"] = d["ttt1"]
-    if d["ttt2"] > 0:
-        d["t2"] = d["mt"] + d["ttt2"]
-    else:
-        d["t2"] = d["ttt2"]
+#    if d["ttt1"] > 0:
+#        d["t1"] = d["mt"] + d["ttt1"]
+#    else:
+    d["t1"] = d["ttt1"]
+#    if d["ttt2"] > 0:
+#        d["t2"] = d["mt"] + d["ttt2"]
+#    else:
+    d["t2"] = d["ttt2"]
     d["apat"] = d["mt"] + d["ttap"]
     d["peat"] = d["mt"] + d["ttpe"]
     if isNum(d["pe"]) and d["pe"] < 0:
@@ -133,6 +133,7 @@ def fuck(status,instring):
             worklist[i] = newchar
         outstring = "".join(worklist)
     if status == 3 or status == 4: #antenna is off or doesn't exist, return blanks
+        worklist = list(workstring) #divide incoming data into a list of characters
         for i,char in enumerate(worklist):
             newchar = " "
             worklist[i] = newchar
@@ -257,7 +258,7 @@ def ptime(num):
         if d >= 365:
             nnum = "%sy %sd" % (ys,ds)
         if h >= 24:
-            nnum = "%sd %s:%s" % (ds,hs,ms) 
+            nnum = "%s/%s%s" % (ds,hs,ms) 
     else:
         nnum = num
     return nnum
@@ -275,11 +276,11 @@ def pltime(num):
         sh = xstr(int(h)).zfill(2)
         sm = xstr(int(m)).zfill(2)
         ss = xstr(int(s)).zfill(2)
-        nnum = "%sd%s:%s:%s" % (sd,sh,sm,ss)
+        nnum = "%s/%s:%s:%s" % (sd,sh,sm,ss)
         if d >= 365:
-            nnum = "%sy%sd%h:%d" % (sy,sd,sh,sm)
+            nnum = "%sy%s/%s:%s" % (sy,sd,sh,sm)
         if y >= 99:
-            nnum = "%sy%sd%sh" % (syl,sd,sh)
+            nnum = "%sy%s/%sh" % (syl,sd,sh)
     else:
         nnum = num
     return nnum
