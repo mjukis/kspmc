@@ -70,11 +70,15 @@ def getTelemetry(d):
 #    if d["ttt1"] > 0:
 #        d["t1"] = d["mt"] + d["ttt1"]
 #    else:
-    d["t1"] = d["ttt1"]
 #    if d["ttt2"] > 0:
 #        d["t2"] = d["mt"] + d["ttt2"]
 #    else:
-    d["t2"] = d["ttt2"]
+    try:
+        d["t1"] = d["ttt1"]
+        d["t2"] = d["ttt2"]
+    except KeyError:
+        d["t1"] = 1
+        d["t2"] = 1
     d["apat"] = d["mt"] + d["ttap"]
     d["peat"] = d["mt"] + d["ttpe"]
     if isNum(d["pe"]) and d["pe"] < 0:
@@ -137,7 +141,7 @@ def fuck(status,instring):
         for i,char in enumerate(worklist):
             newchar = " "
             worklist[i] = newchar
-        outstring = "".join(worklist)    
+        outstring = "".join(worklist)
     return outstring
 
 def fucknum(status,indata):
@@ -258,7 +262,7 @@ def ptime(num):
         if d >= 365:
             nnum = "%sy %sd" % (ys,ds)
         if h >= 24:
-            nnum = "%s/%s%s" % (ds,hs,ms) 
+            nnum = "%s/%s%s" % (ds,hs,ms)
     else:
         nnum = num
     return nnum
