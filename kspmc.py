@@ -1,3 +1,4 @@
+import sys
 import random
 import time
 import datetime
@@ -460,3 +461,39 @@ def draw_hbar_window(win,data,key,mkey):
     win.move(1,1)
     printhbar(win,hbar,hperc)
     win.refresh()
+
+#-------------------------------------------------------
+# functions that deal with startup
+
+def start_module(mainloop):
+    try:
+        # Initialize curses
+        stdscr = curses.initscr()
+        curses.start_color()
+        curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        stdscr.bkgd(curses.color_pair(1));
+        stdscr.bkgd(curses.color_pair(1));
+
+        # Turn off echoing of keys, and enter cbreak mode,
+        # where no buffering is performed on keyboard input
+        curses.noecho()
+        curses.cbreak()
+        stdscr.keypad(1)
+
+        mainloop(stdscr)                # Enter the main loop
+
+        # Set everything back to normal
+        curses.echo()
+        curses.nocbreak()
+        stdscr.keypad(0)
+
+        curses.endwin()                 # Terminate curses
+    except:
+        # In event of error, restore terminal to sane state.
+        curses.echo()
+        curses.nocbreak()
+        stdscr.keypad(0)
+        curses.endwin()
+        print sys.exc_info()           # Print the exception
+
+
