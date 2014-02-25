@@ -113,7 +113,7 @@ def getRadar(d):
         d["rhs"] = " "
         d["rvs"] = " "
         d["rsfcs"] = " "
-        d["rstatus"] = "UNAVAIL"    
+        d["rstatus"] = "UNAVAIL"
     if isNum(d["ralt"]):
         if d["ralt"] > 100000:
             if d["ralt"] > 1000000:
@@ -402,41 +402,5 @@ def mainloop(win):
     channel.basic_consume(callback, queue="ksp_data", no_ack=True)
     channel.start_consuming()
 
-def startup():
-    #wrapper to avoid console errors on program bug
-    #totally stolen btw
-    try:
-        # Initialize curses
-        stdscr = curses.initscr()
-        curses.start_color()
-        curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        stdscr.bkgd(curses.color_pair(1));
-        stdscr.bkgd(curses.color_pair(1));
-
-        # Turn off echoing of keys, and enter cbreak mode,
-        # where no buffering is performed on keyboard input
-        curses.noecho()
-        curses.cbreak()
-        stdscr.keypad(1)
-
-        mainloop(stdscr)                # Enter the main loop
-
-        # Set everything back to normal
-        curses.echo()
-        curses.nocbreak()
-        stdscr.keypad(0)
-
-        curses.endwin()                 # Terminate curses
-    except:
-        # In event of error, restore terminal to sane state.
-        curses.echo()
-        curses.nocbreak()
-        stdscr.keypad(0)
-        curses.endwin()
-        traceback.print_exc()           # Print the exception
-
 if __name__=='__main__':
-    startup()
-
-
-
+    start_module(mainloop)
